@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+    <metadata>
+        <id>$id$</id>
+        <version>$version$</version>
+        <title>$title$</title>
+        <authors>hechao</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <license type="expression">MIT</license>
+        <icon>function.png</icon>
+        <projectUrl>http://project_url_here_or_delete_this_line/</projectUrl>
+        <description>A C# expression evaluation library based on reflection</description>
+        <releaseNotes/>
+        <copyright>$copyright$</copyright>
+        <tags>C# Expression Evaluation</tags>
+    </metadata>
+    <files>
+        <file src="function.png" target="" />
+    </files>
+</package>
