@@ -241,11 +241,7 @@ namespace Feval
                         continue;
                     }
 
-                    if (!m_VisitedNamespaces.Contains(ns))
-                    {
-                        m_VisitedNamespaces.Add(ns);
-                    }
-
+                    m_VisitedNamespaces.Add(ns);
                     if (ns.Contains(name))
                     {
                         return true;
