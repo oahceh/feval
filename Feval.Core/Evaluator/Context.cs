@@ -90,11 +90,7 @@ namespace Feval
 
         public Context WithReference(Assembly assembly)
         {
-            if (!m_ImportedAssemblies.Contains(assembly))
-            {
-                m_ImportedAssemblies.Add(assembly);
-            }
-
+            m_ImportedAssemblies.Add(assembly);
             return this;
         }
 
