@@ -6,4 +6,4 @@
 - Non-intrusive
 - Common C# expression support
 
-## Use At a Glance
+## Use at a Glance
