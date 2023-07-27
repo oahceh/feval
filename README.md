@@ -54,6 +54,6 @@ Assuming the evaluation context has been created.
 ### Method Call
 
 ```c#
-> ctx.Evaluate("a.Func(\"World\")"
+> ctx.Evaluate("a.Func(\"World\"))"
 > Hello World
 ```
