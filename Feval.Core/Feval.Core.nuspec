@@ -7,7 +7,7 @@
         <authors>hechao</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <license type="expression">MIT</license>
-        <icon>function.png</icon>
+        <icon>logo.png</icon>
         <projectUrl>https://github.com/oahceh/feval</projectUrl>
         <description>A C# expression evaluation library based on reflection</description>
         <releaseNotes/>
@@ -15,6 +15,6 @@
         <tags>C# Expression Evaluation</tags>
     </metadata>
     <files>
-        <file src="function.png" target=""/>
+        <file src="logo.png" target=""/>
     </files>
 </package>

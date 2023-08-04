@@ -2,3 +2,4 @@
 .vs/
 Feval.sln.DotSettings.user
 .DS_Store
+*.nupkg

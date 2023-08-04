@@ -82,7 +82,7 @@
     <Compile Include="Syntax\TypeOrNamespace.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="function.png">
+    <Content Include="logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
