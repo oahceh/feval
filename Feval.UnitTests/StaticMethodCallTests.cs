@@ -15,6 +15,11 @@ namespace Feval.UnitTests
 
     public class StaticMethodCall
     {
+        public static string PrintObject(object o)
+        {
+            return o.GetType().Name;
+        }
+
         public static string Print(Parent p)
         {
             return p.GetType().Name;
@@ -48,6 +53,17 @@ namespace Feval.UnitTests
         }
 
         [Fact]
+        public void CallMethodWithDerivedArgType()
+        {
+            Eval("using Feval.UnitTests");
+            Eval("StaticMethodCall.Print(new Child())");
+            Assert.Equal(nameof(Child), retValue);
+
+            Eval("StaticMethodCall.PrintObject(new Child())");
+            Assert.Equal(nameof(Child), retValue);
+        }
+
+        [Fact]
         public void Test()
         {
             Eval("using Feval.UnitTests");
@@ -72,9 +88,6 @@ namespace Feval.UnitTests
 
             Eval("StaticMethodCall.Get()");
             Assert.Equal("Hello World", retValue);
-
-            Eval("StaticMethodCall.Print(new Child())");
-            Assert.Equal(nameof(Child), retValue);
         }
     }
 }
