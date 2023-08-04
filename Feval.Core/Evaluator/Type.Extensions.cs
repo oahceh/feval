@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace Feval
 {
@@ -36,15 +37,39 @@ namespace Feval
             return null;
         }
 
-        public static MethodInfo GetMethod(this Type type, string name, BindingFlags flags, object[] arguments)
+        public static string FormatMethodName(string name, object[] args)
         {
-            var types = new Type[arguments.Length];
+            var types = GetTypes(args);
+            var builder = new StringBuilder();
+            builder.Append(name);
+            builder.Append("(");
             for (var i = 0; i < types.Length; i++)
             {
-                types[i] = arguments[i]?.GetType();
+                builder.Append(types[i]?.Name ?? Type.Missing);
+                if (i != types.Length - 1)
+                {
+                    builder.Append(", ");
+                }
             }
 
-            return type.GetMethods(name, flags, types, false).FirstOrDefault();
+            builder.Append(")");
+            return builder.ToString();
+        }
+
+        public static Type[] GetTypes(object[] args)
+        {
+            var types = new Type[args.Length];
+            for (var i = 0; i < types.Length; i++)
+            {
+                types[i] = args[i]?.GetType();
+            }
+
+            return types;
+        }
+
+        public static MethodInfo GetMethod(this Type type, string name, BindingFlags flags, object[] arguments)
+        {
+            return type.GetMethods(name, flags, GetTypes(arguments), false).FirstOrDefault();
         }
 
         public static object Invoke(this MethodInfo method, object obj, ref object[] arguments,
@@ -80,9 +105,14 @@ namespace Feval
 
         #region Method
 
-        private static bool Convertable(Type argType, Type paraType)
+        private static bool CanChangeType(Type argType, Type paraType)
         {
-            return argType == null || argType == paraType || argType.IsSubclassOf(paraType);
+            if (argType == null)
+            {
+                return true;
+            }
+
+            return argType == paraType || argType.IsSubclassOf(paraType) || paraType.IsAssignableFrom(argType);
         }
 
         /// <summary>
@@ -106,7 +136,7 @@ namespace Feval
             for (var i = 0; i < argCount; i++)
             {
                 var parameter = parameters[i];
-                if (!Convertable(argTypes[i], parameter.ParameterType) &&
+                if (!CanChangeType(argTypes[i], parameter.ParameterType) &&
                     !parameter.ParameterType.IsGenericParameter &&
                     !parameter.IsOut)
                 {

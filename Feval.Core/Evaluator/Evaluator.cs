@@ -196,6 +196,12 @@ namespace Feval
             expression.TypeOrNamespace = isStatic ? expression.TypeOrNamespace : tns;
             var type = isStatic ? tns.Types.First() : value.GetType();
             var methodInfo = type.GetMethod(tns.ToBindName, isStatic ? StaticFlags : InstanceFlags, argumentValues);
+            if (methodInfo == null)
+            {
+                throw new Exception(
+                    $"Method '{TypeExtensions.FormatMethodName(tns.ToBindName, argumentValues)}' not found");
+            }
+
             var ret = InvokeMethod(methodInfo, value, ref argumentValues);
 
             // Write back out variable values

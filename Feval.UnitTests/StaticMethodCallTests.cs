@@ -11,6 +11,7 @@ namespace Feval.UnitTests
 
     public class Child : Parent
     {
+        public static Child[] children = { new Child() };
     }
 
     public class StaticMethodCall
@@ -23,6 +24,16 @@ namespace Feval.UnitTests
         public static string Print(Parent p)
         {
             return p.GetType().Name;
+        }
+
+        public static string CallWithArray(Parent[] ps)
+        {
+            return ps.GetType().Name;
+        }
+
+        public static string CallWithIEnumerable(IEnumerable<Parent> ps)
+        {
+            return ps.GetType().Name;
         }
 
         public static int Add(int a, int b)
@@ -61,6 +72,12 @@ namespace Feval.UnitTests
 
             Eval("StaticMethodCall.PrintObject(new Child())");
             Assert.Equal(nameof(Child), retValue);
+
+            Eval("StaticMethodCall.CallWithArray(Child.children)");
+            Assert.Equal(Child.children.GetType().Name, retValue);
+
+            Eval("StaticMethodCall.CallWithIEnumerable(Child.children)");
+            Assert.Equal(Child.children.GetType().Name, retValue);
         }
 
         [Fact]
