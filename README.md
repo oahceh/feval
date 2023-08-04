@@ -1,5 +1,5 @@
 <p align="center">
-<img width="450" src="logo.svg" alt="feval logo">
+<img width="300" src="logo.svg" alt="feval logo">
 </p>
 <h1 align="center">A Light C# Expression Evaluator</h1>
 <p align="center"><a href="https://www.nuget.org/packages/Feval.Core"><img alt="Static Badge" src="https://img.shields.io/badge/nuget-v1.0.6-blue">
