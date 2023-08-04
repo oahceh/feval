@@ -5,8 +5,21 @@ using Xunit.Abstractions;
 
 namespace Feval.UnitTests
 {
+    public class Parent
+    {
+    }
+
+    public class Child : Parent
+    {
+    }
+
     public class StaticMethodCall
     {
+        public static string Print(Parent p)
+        {
+            return p.GetType().Name;
+        }
+
         public static int Add(int a, int b)
         {
             return a + b;
@@ -59,6 +72,9 @@ namespace Feval.UnitTests
 
             Eval("StaticMethodCall.Get()");
             Assert.Equal("Hello World", retValue);
+
+            Eval("StaticMethodCall.Print(new Child())");
+            Assert.Equal(nameof(Child), retValue);
         }
     }
 }

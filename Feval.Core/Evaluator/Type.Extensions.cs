@@ -80,6 +80,11 @@ namespace Feval
 
         #region Method
 
+        private static bool Convertable(Type argType, Type paraType)
+        {
+            return argType == null || argType == paraType || argType.IsSubclassOf(paraType);
+        }
+
         /// <summary>
         /// 匹配指定方法形参实参类型
         /// </summary>
@@ -101,7 +106,8 @@ namespace Feval
             for (var i = 0; i < argCount; i++)
             {
                 var parameter = parameters[i];
-                if (parameter.ParameterType != argTypes[i] && !parameter.ParameterType.IsGenericParameter &&
+                if (!Convertable(argTypes[i], parameter.ParameterType) &&
+                    !parameter.ParameterType.IsGenericParameter &&
                     !parameter.IsOut)
                 {
                     return false;
