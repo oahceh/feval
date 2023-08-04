@@ -2,7 +2,7 @@
 <img width="240" src="logo.svg" alt="feval logo">
 </p>
 <h1 align="center">A Light C# Expression Evaluator</h1>
-<p align="center"><a href="https://www.nuget.org/packages/Feval.Core"><img alt="Static Badge" src="https://img.shields.io/badge/nuget-v1.0.6-blue">
+<p align="center"><a href="https://www.nuget.org/packages/Feval.Core"><img alt="Static Badge" src="https://img.shields.io/badge/nuget-v1.0.8-blue">
 </a></p>
 
 ## About
@@ -13,7 +13,7 @@ existing project for simple expression evaluation or debugging(inspect or modify
 ## Installation
 
 ```shell
-PM> NuGet\Install-Package Feval.Core -Version 1.0.6.34490
+PM> NuGet\Install-Package Feval.Core -Version 1.0.8.29431
 ```
 
 ## Use at a Glance
