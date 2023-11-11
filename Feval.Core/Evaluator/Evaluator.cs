@@ -391,8 +391,9 @@ namespace Feval
 
         private EvaluationResult EvaluateUsingExpression(UsingExpressionSyntax expression)
         {
-            EvaluateExpression(expression.ExpressionSyntax);
-            var ns = expression.ExpressionSyntax.TypeOrNamespace.Namespace;
+            // EvaluateExpression(expression.ExpressionSyntax);
+            // var ns = expression.ExpressionSyntax.TypeOrNamespace.Namespace;
+            var ns = expression.ExpressionSyntax.Text;
             if (!string.IsNullOrEmpty(ns) && m_Context.IsNamespace(ns))
             {
                 m_Context.UsingNameSpace(ns);

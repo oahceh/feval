@@ -126,9 +126,9 @@ namespace Feval
             SetVariable(name, null);
         }
 
-        public void UsingNameSpace(string nameSpace)
+        public void UsingNameSpace(string @namespace)
         {
-            m_UsingNamespaces.Add(nameSpace);
+            m_UsingNamespaces.Add(@namespace);
         }
 
         public bool IsNamespace(string name)
