@@ -7,7 +7,7 @@ using System.Text;
 namespace Feval
 {
     [AttributeUsage(AttributeTargets.Method)]
-    public class BuiltinAttribute : Attribute
+    internal sealed class BuiltinAttribute : Attribute
     {
         public string Name { get; }
 
@@ -20,7 +20,7 @@ namespace Feval
         }
     }
 
-    public class BuiltinFunctionResult
+    internal sealed class BuiltinFunctionResult
     {
         public object Value { get; }
 
@@ -35,7 +35,7 @@ namespace Feval
         }
     }
 
-    public class BuiltinFunctions
+    internal static class BuiltinFunctions
     {
         internal static IEnumerable<FunctionSymbol> GetAll()
         {

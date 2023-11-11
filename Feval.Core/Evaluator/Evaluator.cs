@@ -392,10 +392,10 @@ namespace Feval
         private EvaluationResult EvaluateUsingExpression(UsingExpressionSyntax expression)
         {
             EvaluateExpression(expression.ExpressionSyntax);
-            var nameSpace = expression.ExpressionSyntax.TypeOrNamespace.Namespace;
-            if (!string.IsNullOrEmpty(nameSpace) && m_Context.IsNamespace(nameSpace))
+            var ns = expression.ExpressionSyntax.TypeOrNamespace.Namespace;
+            if (!string.IsNullOrEmpty(ns) && m_Context.IsNamespace(ns))
             {
-                m_Context.UsingNameSpace(nameSpace);
+                m_Context.UsingNameSpace(ns);
             }
 
             return EvaluationResult.Void;

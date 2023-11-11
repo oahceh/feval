@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"
+            Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{E69DD9D7-0AB8-4CDE-AC70-6E86175A2C99}</ProjectGuid>
+        <OutputType>Exe</OutputType>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>Feval.Cli</RootNamespace>
+        <AssemblyName>Feval.Cli</AssemblyName>
+        <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+        <FileAlignment>512</FileAlignment>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="System"/>
+        <Reference Include="System.Core"/>
+        <Reference Include="System.Data"/>
+        <Reference Include="System.Xml"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="EvaluationClient.cs" />
+        <Compile Include="EvaluationStandalone.cs" />
+        <Compile Include="IEvaluationService.cs" />
+        <Compile Include="Network\Crypto\AesDecryptor.cs" />
+        <Compile Include="Network\Crypto\AesEncryptor.cs" />
+        <Compile Include="Network\Crypto\CounterModeCryptoTransform.cs" />
+        <Compile Include="Network\Crypto\Crc.cs" />
+        <Compile Include="Network\Crypto\LZ4\ILZ4Service.cs" />
+        <Compile Include="Network\Crypto\LZ4\LZ4Codec.cs" />
+        <Compile Include="Network\Crypto\LZ4\LZ4ps\LZ4Codec.cs" />
+        <Compile Include="Network\Crypto\LZ4\LZ4ps\LZ4Codec.Safe.cs" />
+        <Compile Include="Network\Crypto\LZ4\LZ4ps\LZ4Codec.Safe32.Dirty.cs" />
+        <Compile Include="Network\Crypto\LZ4\LZ4ps\LZ4Codec.Safe32HC.Dirty.cs" />
+        <Compile Include="Network\Crypto\LZ4\LZ4ps\LZ4Codec.Safe64.Dirty.cs" />
+        <Compile Include="Network\Crypto\LZ4\LZ4ps\LZ4Codec.Safe64HC.Dirty.cs" />
+        <Compile Include="Network\Crypto\LZ4\LZ4Stream.cs" />
+        <Compile Include="Network\Crypto\LZ4\LZ4StreamFlags.cs" />
+        <Compile Include="Network\Crypto\LZ4\LZ4StreamMode.cs" />
+        <Compile Include="Network\Crypto\LZ4\Services\Safe32LZ4Service.cs" />
+        <Compile Include="Network\Crypto\LZ4\Services\Safe64LZ4Service.cs" />
+        <Compile Include="Network\Crypto\Rsa.cs" />
+        <Compile Include="Network\Crypto\ZLib.cs" />
+        <Compile Include="Network\Helper\NetHelper.cs" />
+        <Compile Include="Network\Net\Common\BufferManager.cs" />
+        <Compile Include="Network\Net\Common\CPack.cs" />
+        <Compile Include="Network\Net\Common\IClient.cs" />
+        <Compile Include="Network\Net\Common\IConnection.cs" />
+        <Compile Include="Network\Net\Common\IHandlerMessage.cs" />
+        <Compile Include="Network\Net\Common\IHandlerServer.cs" />
+        <Compile Include="Network\Net\Common\IPack.cs" />
+        <Compile Include="Network\Net\Common\IServer.cs" />
+        <Compile Include="Network\Net\Common\MemoryStreamPool.cs" />
+        <Compile Include="Network\Net\Common\SocketAsyncEventArgsPool.cs" />
+        <Compile Include="Network\Net\Tcp\Client\TCPClient.cs" />
+        <Compile Include="Network\Net\Tcp\Common\AesKeyIV.cs" />
+        <Compile Include="Network\Net\Tcp\Common\AesKeyIVAes.cs" />
+        <Compile Include="Network\Net\Tcp\Common\AesKeyIVRsa.cs" />
+        <Compile Include="Network\Net\Tcp\Common\IIOCP.cs" />
+        <Compile Include="Network\Net\Tcp\Common\IOCPConn.cs" />
+        <Compile Include="Network\Net\Tcp\Common\TCPConnection.cs" />
+        <Compile Include="Network\Net\Tcp\Server\TCPServer.cs" />
+        <Compile Include="Network\Net\Tcp\Server\TCPServerHandler.cs" />
+        <Compile Include="Network\Net\Udp\Client\UDPClient.cs" />
+        <Compile Include="Network\Net\Udp\Common\AesKeyIV.cs" />
+        <Compile Include="Network\Net\Udp\Common\UDPConnection.cs" />
+        <Compile Include="Network\Net\Udp\Kcp\ByteBuffer.cs" />
+        <Compile Include="Network\Net\Udp\Kcp\Kcp.cs" />
+        <Compile Include="Network\Net\Udp\Kcp\UDPSession.cs" />
+        <Compile Include="Network\Net\Udp\Server\UDPServer.cs" />
+        <Compile Include="Network\Net\Udp\Server\UDPServerHandler.cs" />
+        <Compile Include="Program.cs"/>
+        <Compile Include="Properties\AssemblyInfo.cs"/>
+        <Compile Include="TaskUtility.cs" />
+        <Compile Include="Test.cs" />
+        <Compile Include="Utility.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="Feval.Cli.nuspec" />
+      <Content Include="function.png" />
+      <Content Include="Network\.DS_Store" />
+      <Content Include="Network\Net\.DS_Store" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Feval.Core\Feval.Core.csproj">
+        <Project>{5c62efc7-b18d-4fc0-92b5-016a00bcfac1}</Project>
+        <Name>Feval.Core</Name>
+      </ProjectReference>
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
+
+</Project>
