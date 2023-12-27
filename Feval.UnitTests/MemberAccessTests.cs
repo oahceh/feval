@@ -3,7 +3,12 @@ using Xunit.Abstractions;
 
 namespace Feval.UnitTests
 {
-    public class MemberAccessTestClass
+    public class MemberAccessTestBaseClass
+    {
+        private string m_BaseStringValue = nameof(MemberAccessTestBaseClass);
+    }
+
+    public class MemberAccessTestClass : MemberAccessTestBaseClass
     {
         public static string stringValue = "HelloWorld";
 
@@ -54,6 +59,9 @@ namespace Feval.UnitTests
 
             Eval("instance._stringValue");
             Assert.Equal("HelloWorld", retValue);
+
+            Eval("instance.m_BaseStringValue");
+            Assert.Equal(nameof(MemberAccessTestBaseClass), retValue);
         }
     }
 }

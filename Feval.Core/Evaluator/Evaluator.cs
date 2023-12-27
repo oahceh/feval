@@ -490,7 +490,7 @@ namespace Feval
                 }
 
                 // 成员未找到
-                throw new Exception($"Member {postfixName} not found");
+                throw new Exception($"Member '{postfixName}' not found");
             }
 
             // 处理prefix已经找到Type的情况

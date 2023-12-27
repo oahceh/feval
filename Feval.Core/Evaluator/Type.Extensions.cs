@@ -13,11 +13,24 @@ namespace Feval
         public static void GetPropertyOrField(this Type type, string name, out PropertyInfo propertyInfo,
             out FieldInfo fieldInfo, object instance = null)
         {
-            // 注: 静态成员的继承需要 BindingFlags.FlattenHierarchy
-            var flag = instance != null ? BindingFlags.Instance : BindingFlags.Static | BindingFlags.FlattenHierarchy;
-            var flags = BindingFlags.Public | BindingFlags.NonPublic | flag;
-            fieldInfo = type.GetField(name, flags);
-            propertyInfo = type.GetProperty(name, flags);
+            while (true)
+            {
+                // 注: 静态成员的继承需要 BindingFlags.FlattenHierarchy
+                var flag = instance != null ? BindingFlags.Instance : BindingFlags.Static;
+                var flags = BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic | flag;
+                fieldInfo = type.GetField(name, flags);
+                propertyInfo = type.GetProperty(name, flags);
+
+                // Looking upwards
+                if (instance != null && fieldInfo == null && propertyInfo == null && type.BaseType != null &&
+                    type.BaseType != typeof(object))
+                {
+                    type = type.BaseType;
+                    continue;
+                }
+
+                break;
+            }
         }
 
         public static MethodInfo GetGenericMethod(this Type t, string name, BindingFlags flags, Type[] genericArgTypes,
