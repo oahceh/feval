@@ -26,5 +26,11 @@ namespace Feval
 
             return "Unknown";
         }
+
+        public bool IsEmpty()
+        {
+            return string.IsNullOrEmpty(Namespace) && string.IsNullOrEmpty(ToBindName) &&
+                   (Types == null || Types.Count == 0);
+        }
     }
 }

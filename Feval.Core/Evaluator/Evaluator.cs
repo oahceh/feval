@@ -194,6 +194,12 @@ namespace Feval
             var isStatic = value == null;
             var tns = expression.Expression.TypeOrNamespace;
             expression.TypeOrNamespace = isStatic ? expression.TypeOrNamespace : tns;
+
+            if (isStatic && tns.IsEmpty())
+            {
+                throw new Exception($"Symbol '{expression.Expression.Text}' not found");
+            }
+
             var type = isStatic ? tns.Types.First() : value.GetType();
             var methodInfo = type.GetMethod(tns.ToBindName, isStatic ? StaticFlags : InstanceFlags, argumentValues);
             if (methodInfo == null)
