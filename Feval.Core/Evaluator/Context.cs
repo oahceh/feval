@@ -194,6 +194,11 @@ namespace Feval
             return ret;
         }
 
+        public void RegisterBuiltInFunction(string name, MethodInfo method)
+        {
+            AddSymbol(new FunctionSymbol(name, method));
+        }
+
         #endregion
 
         #region Method

@@ -1,15 +1,23 @@
 ﻿using System;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Feval.Cli
 {
     internal sealed class EvaluationStandalone : IEvaluationService
     {
+        private static void Quit()
+        {
+            Environment.Exit(0);
+        }
+
         public Task Run(Options option)
         {
             Context.Create();
             var context = Context.Main;
             context.WithReferences(AppDomain.CurrentDomain.GetAssemblies());
+            context.RegisterBuiltInFunction("quit",
+                GetType().GetMethod("Quit", BindingFlags.Static | BindingFlags.NonPublic));
             // Print version info
             Console.WriteLine(context.Evaluate("version()"));
             // Cli Main Loop
