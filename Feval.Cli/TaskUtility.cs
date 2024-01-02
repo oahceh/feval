@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-
-namespace Feval.Cli
+﻿namespace Feval.Cli
 {
     internal static class TaskUtility
     {
