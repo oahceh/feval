@@ -59,8 +59,10 @@ namespace Feval.Cli
         [JsonProperty("max_history")]
         public int MaxHistoryCount { get; set; } = 20;
 
+        [JsonIgnore]
         public DefaultOptions Default { get; set; }
 
+        [JsonIgnore]
         public ConnectOptions Connect { get; set; }
 
         public bool AddHistory(List<string> history)
@@ -197,9 +199,10 @@ namespace Feval.Cli
 
         private static IEvaluationRunner? m_Runner;
 
-        private static string OptionsPath => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "options.json");
+        private static string LocalDataDirectory =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Feval.Cli");
+
+        private static string OptionsPath => Path.Combine(LocalDataDirectory, "options.json");
 
         private static Options Ops => OpsManager.Options;
 
@@ -217,11 +220,14 @@ namespace Feval.Cli
 
             private Options ReadOptions()
             {
-                Options? options;
+                Options? options = null;
                 try
                 {
-                    var text = File.ReadAllText(SerializedPath);
-                    options = JsonConvert.DeserializeObject<Options>(text);
+                    if (File.Exists(SerializedPath))
+                    {
+                        var text = File.ReadAllText(SerializedPath);
+                        options = JsonConvert.DeserializeObject<Options>(text);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -237,10 +243,16 @@ namespace Feval.Cli
             {
                 try
                 {
-                    File.WriteAllText(SerializedPath, JsonConvert.SerializeObject(Options));
+                    if (!Directory.Exists(LocalDataDirectory))
+                    {
+                        Directory.CreateDirectory(LocalDataDirectory);
+                    }
+
+                    File.WriteAllText(SerializedPath, JsonConvert.SerializeObject(Options, Formatting.Indented));
                 }
                 catch (Exception e)
                 {
+                    Console.Error.WriteLine(e);
                 }
             }
 

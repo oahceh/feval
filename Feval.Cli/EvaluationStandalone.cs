@@ -71,7 +71,10 @@ namespace Feval.Cli
 
         public void Quit()
         {
-            if (OptionsManager.Options.AddHistory(ReadLine.GetHistory()))
+            var allHistory = ReadLine.GetHistory();
+            var newHistory = allHistory.GetRange(OptionsManager.Options.History.Count,
+                allHistory.Count - OptionsManager.Options.History.Count);
+            if (OptionsManager.Options.AddHistory(newHistory))
             {
                 OptionsManager.WriteOptions();
             }

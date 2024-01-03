@@ -66,6 +66,7 @@ namespace Feval.Cli
             }
 
             ReadLine.HistoryEnabled = true;
+            ReadLine.AddHistory(options.History.ToArray());
             while (true)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -75,6 +76,12 @@ namespace Feval.Cli
                 var input = ReadLine.Read();
                 if (string.IsNullOrEmpty(input))
                 {
+                    continue;
+                }
+
+                if (input.StartsWith("#"))
+                {
+                    await HandleMetaCommands(input[1..]);
                     continue;
                 }
 
@@ -89,9 +96,40 @@ namespace Feval.Cli
             // ReSharper disable once FunctionNeverReturns
         }
 
+        private async Task HandleMetaCommands(string input)
+        {
+            if (input.StartsWith("load"))
+            {
+                var path = input["load".Length..];
+                path = new Uri(path).AbsolutePath;
+                if (File.Exists(path))
+                {
+                    var lines = await File.ReadAllLinesAsync(path);
+                    foreach (var line in lines)
+                    {
+                        if (!string.IsNullOrEmpty(line))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.Write(">> ");
+                            Console.ResetColor();
+                            Console.WriteLine(line);
+                            await EvaluateAsync(line);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                await Console.Error.WriteLineAsync($"Unsupported meta command: {input}");
+            }
+        }
+
         public void Quit()
         {
-            if (OptionsManager.Options.AddHistory(ReadLine.GetHistory()))
+            var allHistory = ReadLine.GetHistory();
+            var newHistory = allHistory.GetRange(OptionsManager.Options.History.Count,
+                allHistory.Count - OptionsManager.Options.History.Count);
+            if (OptionsManager.Options.AddHistory(newHistory))
             {
                 OptionsManager.WriteOptions();
             }
@@ -112,7 +150,7 @@ namespace Feval.Cli
         }
 
         private IOptionsManager OptionsManager { get; set; }
-        
+
         private bool? Connected { get; set; }
 
         private bool WaitingForResponse { get; set; }
