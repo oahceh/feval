@@ -59,6 +59,7 @@ namespace Feval
             var attributes = GetAllBuiltinAttributes();
             var builder = new StringBuilder();
             builder.AppendLine(Version().Value as string);
+            builder.AppendLine(Copyright().Value as string);
             for (var i = 0; i < attributes.Count; i++)
             {
                 var attribute = attributes[i];
@@ -107,12 +108,20 @@ namespace Feval
             var assembly = typeof(Evaluator).Assembly;
             var assemblyName = assembly.GetName();
             var version = assemblyName.Version;
-            var copyright = assembly.GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
             var builder = new StringBuilder();
             builder.Append(assemblyName.Name);
             builder.Append(" ");
             builder.Append($"{version.Major}.{version.Minor}.{version.Build}");
-            builder.AppendLine();
+            return new BuiltinFunctionResult(builder.ToString());
+        }
+
+        [Builtin("copyright", "Display copyright information")]
+        private static BuiltinFunctionResult Copyright()
+        {
+            var assembly = typeof(Evaluator).Assembly;
+            var assemblyName = assembly.GetName();
+            var copyright = assembly.GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
+            var builder = new StringBuilder();
             builder.Append(copyright);
             builder.Append(" ");
             builder.Append(assemblyName.Name);

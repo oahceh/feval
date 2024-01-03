@@ -5,6 +5,13 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Title>Feval.Cli</Title>
+        <Authors>HeChao</Authors>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Version>1.1.1</Version>
+        
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>feval</ToolCommandName>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -17,10 +24,25 @@
 
     <ItemGroup>
       <PackageReference Include="CommandLineParser" Version="2.9.1" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+      <PackageReference Include="ReadLine" Version="2.0.1" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Feval.Core\Feval.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="..\logo.svg">
+        <Link>logo.svg</Link>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="function.png" />
+      <AdditionalFiles Include="function.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </AdditionalFiles>
     </ItemGroup>
 
 </Project>

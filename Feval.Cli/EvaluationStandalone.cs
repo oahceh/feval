@@ -1,25 +1,32 @@
-﻿using System;
-using System.Reflection;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
 
 namespace Feval.Cli
 {
-    internal sealed class EvaluationStandalone : IEvaluationService
+    internal sealed class EvaluationStandalone : IEvaluationRunner
     {
-        private static void Quit()
+        public Task Run(IOptionsManager manager)
         {
-            Environment.Exit(0);
-        }
-
-        public Task Run(Options option)
-        {
-            Context.Create();
-            var context = Context.Main;
+            OptionsManager = manager;
+            var options = manager.Options;
+            var context = Context.Create();
             context.WithReferences(AppDomain.CurrentDomain.GetAssemblies());
-            context.RegisterBuiltInFunction("quit",
-                GetType().GetMethod("Quit", BindingFlags.Static | BindingFlags.NonPublic));
-            // Print version info
+            context.RegisterDumper(JsonConvert.SerializeObject);
+
             Console.WriteLine(context.Evaluate("version()"));
+            Console.WriteLine(context.Evaluate("copyright()"));
+            if (options.DefaultUsingNamespaces.Count > 0)
+            {
+                Console.WriteLine("Using default namespaces:");
+                foreach (var expression in options.DefaultUsingNamespaces.Select(ns => $"using {ns}"))
+                {
+                    context.Evaluate(expression);
+                    Console.WriteLine(expression);
+                }
+            }
+
+            ReadLine.HistoryEnabled = true;
+            ReadLine.AddHistory(options.History.ToArray());
+
             // Cli Main Loop
             while (true)
             {
@@ -27,7 +34,7 @@ namespace Feval.Cli
                 Console.Write(">> ");
                 Console.ResetColor();
 
-                var line = Console.ReadLine();
+                var line = ReadLine.Read();
                 if (string.IsNullOrEmpty(line))
                 {
                     continue;
@@ -36,7 +43,7 @@ namespace Feval.Cli
                 try
                 {
                     var ret = context.Evaluate(line);
-                    if (option.Verbose)
+                    if (options.Default.Verbose)
                     {
                         Console.WriteLine("Tokens:");
                         Utility.PrintTokens(Console.Out, context.SyntaxTree.Tokens);
@@ -61,5 +68,15 @@ namespace Feval.Cli
                 }
             }
         }
+
+        public void Quit()
+        {
+            if (OptionsManager.Options.AddHistory(ReadLine.GetHistory()))
+            {
+                OptionsManager.WriteOptions();
+            }
+        }
+
+        private IOptionsManager OptionsManager { get; set; }
     }
 }
