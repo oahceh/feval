@@ -76,6 +76,7 @@
     <Compile Include="Syntax\TypeOrNamespace.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Feval.Core.nuspec" />
     <Content Include="logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
