@@ -34,8 +34,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Evaluator\Context.cs" />
+    <Compile Include="Evaluator\DefaultReflector.cs" />
     <Compile Include="Evaluator\Evaluator.cs" />
+    <Compile Include="Evaluator\IReflector.cs" />
     <Compile Include="Evaluator\ReflectionUtilities.cs" />
+    <Compile Include="Evaluator\Reflector.cs" />
     <Compile Include="Evaluator\Type.Extensions.cs" />
     <Compile Include="Symbol\BuiltinFunctions.cs" />
     <Compile Include="Symbol\FunctionSymbol.cs" />

@@ -7,17 +7,6 @@ namespace Feval
     {
         #region Interface
 
-        /// <summary>
-        /// 通过反射获取指定对象的属性或者字段的值
-        /// </summary>
-        /// <param name="instance">指定对象实例</param>
-        /// <param name="name">属性或者字段名</param>
-        public static object GetValue(object instance, string name)
-        {
-            instance.GetType().TryGetMemberValue(name, out var ret, instance);
-            return ret;
-        }
-
         public static bool TryGetMemberValue(object instance, string memberName, out object value)
         {
             return instance.GetType().TryGetMemberValue(memberName, out value, instance);

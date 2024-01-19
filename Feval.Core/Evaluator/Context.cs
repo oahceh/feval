@@ -64,10 +64,20 @@ namespace Feval
         {
             if (dumper == null)
             {
-                return;
+                throw new ArgumentNullException(nameof(dumper));
             }
 
             ObjDumper.Dumper = dumper;
+        }
+
+        public void RegisterReflector(IReflector reflector)
+        {
+            if (reflector == null)
+            {
+                throw new ArgumentNullException(nameof(reflector));
+            }
+
+            Reflector.Instance = reflector;
         }
 
         public EvaluationResult Evaluate(string text)
@@ -184,7 +194,7 @@ namespace Feval
             var ret = new List<Type>();
             foreach (var assembly in m_ImportedAssemblies)
             {
-                var type = assembly.GetType(fullName);
+                var type = Reflector.GetType(assembly, fullName);
                 if (type != null)
                 {
                     ret.Add(type);

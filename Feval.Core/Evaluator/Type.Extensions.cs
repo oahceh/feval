@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -18,8 +17,8 @@ namespace Feval
                 // 注: 静态成员的继承需要 BindingFlags.FlattenHierarchy
                 var flag = instance != null ? BindingFlags.Instance : BindingFlags.Static;
                 var flags = BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic | flag;
-                fieldInfo = type.GetField(name, flags);
-                propertyInfo = type.GetProperty(name, flags);
+                fieldInfo = Reflector.GetField(type, name, flags);
+                propertyInfo = Reflector.GetProperty(type, name, flags);
 
                 // Looking upwards
                 if (instance != null && fieldInfo == null && propertyInfo == null && type.BaseType != null &&
@@ -69,17 +68,6 @@ namespace Feval
             return builder.ToString();
         }
 
-        public static Type[] GetTypes(object[] args)
-        {
-            var types = new Type[args.Length];
-            for (var i = 0; i < types.Length; i++)
-            {
-                types[i] = args[i]?.GetType();
-            }
-
-            return types;
-        }
-
         public static MethodInfo GetMethod(this Type type, string name, BindingFlags flags, object[] arguments)
         {
             return type.GetMethods(name, flags, GetTypes(arguments), false).FirstOrDefault();
@@ -99,24 +87,28 @@ namespace Feval
             return method.Invoke(obj, arguments);
         }
 
-        public static List<MethodInfo> GetMethods(this Type type, string name, BindingFlags flags)
-        {
-            var methods = type.GetMethods(flags);
-            return methods.Where(method => method.Name == name).ToList();
-        }
-
-        public static MethodInfo[] GetMethods(this Type type, string name, BindingFlags flags, Type[] argTypes,
-            bool generic)
-        {
-            var methods = type.GetMethods(name, flags);
-            return methods.Where(method =>
-                    generic == method.ContainsGenericParameters && MatchArgumentAndParameterTypes(method, argTypes))
-                .ToArray();
-        }
-
         #endregion
 
         #region Method
+
+        private static Type[] GetTypes(object[] args)
+        {
+            var types = new Type[args.Length];
+            for (var i = 0; i < types.Length; i++)
+            {
+                types[i] = args[i]?.GetType();
+            }
+
+            return types;
+        }
+
+        private static MethodInfo[] GetMethods(this Type type, string name, BindingFlags flags, Type[] argTypes,
+            bool generic)
+        {
+            return Reflector.GetMethods(type, name, flags).Where(method =>
+                    generic == method.ContainsGenericParameters && MatchArgumentAndParameterTypes(method, argTypes))
+                .ToArray();
+        }
 
         private static bool CanChangeType(Type argType, Type paraType)
         {
