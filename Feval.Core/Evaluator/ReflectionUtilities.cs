@@ -69,27 +69,6 @@ namespace Feval
             }
         }
 
-        public static string FormatGenericTypeName(string name, Type[] genericArgumentTypes)
-        {
-            var builder = new StringBuilder();
-            builder.Append(name);
-            builder.Append('`');
-            builder.Append(genericArgumentTypes.Length);
-            builder.Append('[');
-            for (var i = 0; i < genericArgumentTypes.Length; i++)
-            {
-                builder.Append(genericArgumentTypes[i].FullName);
-                if (i != genericArgumentTypes.Length - 1)
-                {
-                    builder.Append(',');
-                }
-            }
-
-            builder.Append(']');
-
-            return builder.ToString();
-        }
-
         #endregion
     }
 }

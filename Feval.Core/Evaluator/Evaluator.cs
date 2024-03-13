@@ -224,7 +224,7 @@ namespace Feval
             if (expression.MethodExpression.Type == SyntaxType.GenericInvocationExpression)
             {
                 EvaluateArgumentList(expression.GenericArgumentList);
-                expression.ResolveGenericType();
+                expression.ResolveGenericTypeName();
             }
 
             var argumentValues = EvaluateArgumentList(expression.ArgumentList);
@@ -234,7 +234,14 @@ namespace Feval
             ConstructorInfo ctor = null;
             foreach (var type in tns.Types)
             {
-                ctor = type.GetConstructor(argumentTypes);
+                var t = type;
+                // 泛型特化
+                if (expression.MethodExpression.Type == SyntaxType.GenericInvocationExpression)
+                {
+                    t = type.MakeGenericType(expression.GenericArgumentList.GetArgumentTypes());
+                }
+
+                ctor = t.GetConstructor(argumentTypes);
                 expression.TypeOrNamespace = tns;
                 if (ctor != null)
                 {

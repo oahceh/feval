@@ -37,12 +37,12 @@ namespace Feval.Syntax
             return MethodExpression.GetArgumentTypes();
         }
 
-        public void ResolveGenericType()
+        public void ResolveGenericTypeName()
         {
             var rightestIdentifier = (MethodExpression.Expression as IdentifierNameSyntax) ??
                                      (MethodExpression.Expression as MemberAccessExpressionSyntax).Name;
-            rightestIdentifier.SetText(ReflectionUtilities.FormatGenericTypeName(rightestIdentifier.Text,
-                (MethodExpression as GenericInvocationExpressionSyntax).GetGenericArgumentTypes()));
+            rightestIdentifier.SetText(
+                $"{rightestIdentifier.Text}`{(MethodExpression as GenericInvocationExpressionSyntax).GenericArgumentList.Count}");
         }
 
         public override IEnumerable<SyntaxNode> GetChildren()
