@@ -23,6 +23,7 @@
         EqualsToken,
         EqualsEqualsToken,
         IdentifierToken,
+        BackquoteToken,
 
         #endregion
 

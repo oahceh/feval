@@ -417,6 +417,19 @@ namespace Feval
 
         private EvaluationResult EvaluateUnaryExpression(UnaryExpressionSyntax expression)
         {
+            switch (expression.Operator.Type)
+            {
+                case SyntaxType.MinusToken:
+                    return EvaluateMinusUnaryExpression(expression);
+                case SyntaxType.BackquoteToken:
+                    return EvaluateBackquoteUnaryExpression(expression);
+                default:
+                    throw new NotImplementedException($"Unary expression for {expression.Operator.Type}");
+            }
+        }
+
+        private EvaluationResult EvaluateMinusUnaryExpression(UnaryExpressionSyntax expression)
+        {
             var value = EvaluateExpression(expression.Operand).Value;
             if (value is int intValue)
             {
@@ -441,6 +454,12 @@ namespace Feval
             return new EvaluationResult(value.GetType()
                 .GetMethod("op_UnaryNegation", BindingFlags.Static | BindingFlags.Public)
                 ?.Invoke(null, null), true);
+        }
+
+        private EvaluationResult EvaluateBackquoteUnaryExpression(UnaryExpressionSyntax expression)
+        {
+            var value = EvaluateExpression(expression.Operand).Value;
+            return new EvaluationResult(ObjDumper.Dump(value), true);
         }
 
         private EvaluationResult EvaluateStringInterpolationExpression(StringInterpolationExpressionSyntax expression)

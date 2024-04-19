@@ -146,8 +146,9 @@ namespace Feval.Syntax
                     return ParseKeywordExpression(CurrentToken);
                 case SyntaxType.OutKeyword:
                     return ParseOutExpressionSyntax();
-                // Support minus unary expression only...
+                // Unary expressions...
                 case SyntaxType.MinusToken:
+                case SyntaxType.BackquoteToken:
                     return ParseUnaryExpressionSyntax();
                 case SyntaxType.DollarToken:
                     return ParseStringInterpolationSyntax();

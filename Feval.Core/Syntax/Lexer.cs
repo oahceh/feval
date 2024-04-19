@@ -98,6 +98,10 @@ namespace Feval.Syntax
                     m_Type = SyntaxType.DollarToken;
                     MoveNext();
                     break;
+                case '`':
+                    m_Type = SyntaxType.BackquoteToken;
+                    MoveNext();
+                    break;
                 case '"':
                     ReadString();
                     break;

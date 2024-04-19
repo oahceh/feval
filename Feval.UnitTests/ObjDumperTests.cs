@@ -15,6 +15,18 @@ namespace Feval.UnitTests
             context.RegisterDumper(obj => $"ObjDump: {obj}");
             Eval("dump(\"hello world\")");
             Assert.Equal("ObjDump: hello world", retValue.ToString());
+            Eval("using Feval.UnitTests");
+            Eval("`typeof(ObjDumperTests)");
+            Assert.Equal($"ObjDump: {typeof(ObjDumperTests)}", retValue.ToString());
+        }
+
+        [Fact]
+        public void DumpOperatorTest()
+        {
+            context.RegisterDumper(obj => $"ObjDump: {obj}");
+            Eval("using Feval.UnitTests");
+            Eval("`typeof(ObjDumperTests)");
+            Assert.Equal($"ObjDump: {typeof(ObjDumperTests)}", retValue.ToString());
         }
     }
 }
