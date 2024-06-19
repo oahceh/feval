@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Net.Common;
 using Net.Tcp.Client;
+using Spectre.Console;
 
 namespace Feval.Cli
 {
@@ -43,17 +44,18 @@ namespace Feval.Cli
         {
             OptionsManager = manager;
             var options = manager.Options;
-            var connectOptions = options.Connect;
+            var runOptions = options.Run;
             m_Client = TCPClient.Create(this);
-            m_Client.Connect(connectOptions.Address, connectOptions.Port);
-            Console.WriteLine($"Connecting evaluation service: {connectOptions.Address}:{connectOptions.Port}...");
-            await TaskUtility.WaitUntil(() => Connected != null);
+            m_Client.Connect(runOptions.Address, runOptions.Port);
+
+            await AnsiConsole.Status().Spinner(Spinner.Known.Dots).StartAsync("Connecting...",
+                async _ => { await TaskUtility.WaitUntil(() => Connected != null); });
             if (Connected == false)
             {
                 return;
             }
 
-            Console.WriteLine($"Evaluation service connected: {connectOptions.Address}:{connectOptions.Port}");
+            Console.WriteLine($"Evaluation service connected: {runOptions.Address}:{runOptions.Port}");
 
             if (options.DefaultUsingNamespaces.Count > 0)
             {
@@ -131,7 +133,7 @@ namespace Feval.Cli
                 allHistory.Count - OptionsManager.Options.History.Count);
             if (OptionsManager.Options.AddHistory(newHistory))
             {
-                OptionsManager.WriteOptions();
+                OptionsManager.WriteAsync();
             }
         }
 

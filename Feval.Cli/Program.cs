@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using Newtonsoft.Json;
+using Spectre.Console;
 using Parser = CommandLine.Parser;
 
 namespace Feval.Cli
@@ -8,7 +9,7 @@ namespace Feval.Cli
     {
         Options Options { get; }
 
-        void WriteOptions();
+        Task WriteAsync();
     }
 
     [Verb("history", HelpText = "Set history options")]
@@ -16,6 +17,16 @@ namespace Feval.Cli
     {
         [Option('m', "max", Required = false, HelpText = "Max history count")]
         public int MaxCount { get; set; } = -1;
+    }
+
+    [Verb("alias", HelpText = "Remote feval service address aliases")]
+    internal sealed class AliasOptions
+    {
+        [Value(0, MetaName = "name", HelpText = "Alias name")]
+        public string Name { get; set; }
+
+        [Value(1, MetaName = "address", HelpText = "Alias name")]
+        public string Address { get; set; }
     }
 
     [Verb("using", HelpText = "Set default using namespaces on launch")]
@@ -31,21 +42,19 @@ namespace Feval.Cli
         public bool Clear { get; set; }
     }
 
-    [Verb("connect", HelpText = "Connect a remote evaluation service")]
-    internal sealed class ConnectOptions
-    {
-        [Option('a', "address", Required = true, HelpText = "The remote feval evaluation service address")]
-        public string Address { get; set; }
-
-        [Option('p', "port", Required = false, HelpText = "The remote feval evaluation service port", Default = 9999)]
-        public int Port { get; set; }
-    }
-
     [Verb("run", isDefault: true, HelpText = "Run in standalone mode")]
-    internal sealed class DefaultOptions
+    internal sealed class RunOptions
     {
         [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages")]
         public bool Verbose { get; set; }
+
+        [Option('s', "standalone", Required = false, HelpText = "Running feval on standalone mode")]
+        public bool Standalone { get; set; }
+
+        [Value(0, MetaName = "address", HelpText = "Remote feval service address")]
+        public string Address { get; set; }
+
+        public int Port { get; set; }
     }
 
     internal sealed class Options
@@ -59,11 +68,11 @@ namespace Feval.Cli
         [JsonProperty("max_history")]
         public int MaxHistoryCount { get; set; } = 20;
 
-        [JsonIgnore]
-        public DefaultOptions Default { get; set; }
+        [JsonProperty("aliases")]
+        public Dictionary<string, string> Aliases { get; set; } = new();
 
         [JsonIgnore]
-        public ConnectOptions Connect { get; set; }
+        public RunOptions Run { get; set; }
 
         public bool AddHistory(List<string> history)
         {
@@ -110,26 +119,61 @@ namespace Feval.Cli
             AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
             Console.CancelKeyPress += OnCancelKeyPress;
             OpsManager = new OptionsManager(OptionsPath);
-            Parser.Default.ParseArguments<DefaultOptions, ConnectOptions, UsingOptions, HistoryOptions>(args)
-                .WithParsed<DefaultOptions>(options =>
-                {
-                    OpsManager.Options.Default = options;
-                    m_Runner = new EvaluationStandalone(OpsManager);
-                })
-                .WithParsed<ConnectOptions>(options =>
-                {
-                    OpsManager.Options.Connect = options;
-                    m_Runner = new EvaluationClient();
-                })
-                .WithParsed<UsingOptions>(HandleUsingOptions)
-                .WithParsed<HistoryOptions>(HandleHistoryOptions);
 
-            if (m_Runner == null)
+            await Parser.Default.ParseArguments<RunOptions, UsingOptions, AliasOptions, HistoryOptions>(args)
+                .MapResult(
+                    (RunOptions options) => HandleRunOptions(options),
+                    (UsingOptions options) => HandleUsingOptions(options),
+                    (AliasOptions options) => HandleAliasOptions(options),
+                    (HistoryOptions options) => HandleHistoryOptions(options),
+                    _ => Task.FromResult(0)
+                );
+        }
+
+        private static async Task HandleRunOptions(RunOptions options)
+        {
+            OpsManager.Options.Run = options;
+            if (options.Verbose || string.IsNullOrEmpty(options.Address))
             {
-                return;
+                m_Runner = new EvaluationStandalone(OpsManager);
+            }
+            else
+            {
+                if (Ops.Aliases.TryGetValue(options.Address, out var aliasAddress))
+                {
+                    options.Address = aliasAddress;
+                }
+
+                if (!TryParseAddress(options.Address, out var address, out var port))
+                {
+                    AnsiConsole.Write(new Markup($"[red]Invalid address: {options.Address}[/]"));
+                    return;
+                }
+
+                options.Address = address;
+                options.Port = port;
+                m_Runner = new EvaluationClient();
             }
 
             await m_Runner.Run(OpsManager);
+        }
+
+        private static bool TryParseAddress(string text, out string address, out int port)
+        {
+            address = string.Empty;
+            port = 0;
+
+            try
+            {
+                var words = text.Split(":");
+                address = words.First();
+                port = int.Parse(words.Last());
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private static void OnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
@@ -142,7 +186,7 @@ namespace Feval.Cli
             m_Runner?.Quit();
         }
 
-        private static void HandleUsingOptions(UsingOptions options)
+        private static async Task HandleUsingOptions(UsingOptions options)
         {
             var flag = false;
             if (options.AddingNamespaces.Any())
@@ -165,19 +209,51 @@ namespace Feval.Cli
             }
             else
             {
+                var table = new Table();
+                table.AddColumn(new TableColumn("Index").Centered());
+                table.AddColumn("Namespace");
+                var index = 0;
                 foreach (var ns in Ops.DefaultUsingNamespaces)
                 {
-                    Console.WriteLine(ns);
+                    table.AddRow($"{++index}", $"[green]{ns}[/]");
                 }
+
+                AnsiConsole.Write(table);
             }
 
             if (flag)
             {
-                OpsManager.WriteOptions();
+                await OpsManager.WriteAsync();
             }
         }
 
-        private static void HandleHistoryOptions(HistoryOptions options)
+        private static async Task HandleAliasOptions(AliasOptions options)
+        {
+            if (string.IsNullOrEmpty(options.Name) && string.IsNullOrEmpty(options.Address))
+            {
+                var table = new Table();
+                table.AddColumn(new TableColumn("Alias").Centered());
+                table.AddColumn("Address");
+                foreach (var kv in Ops.Aliases)
+                {
+                    table.AddRow(kv.Key, $"[green]{kv.Value}[/]");
+                }
+
+                AnsiConsole.Write(table);
+            }
+            else if (!TryParseAddress(options.Address, out _, out _))
+            {
+                AnsiConsole.Write(new Markup($"[red]Invalid address: {options.Address}[/]"));
+                return;
+            }
+            else
+            {
+                Ops.Aliases[options.Name] = options.Address;
+                await OpsManager.WriteAsync();
+            }
+        }
+
+        private static async Task HandleHistoryOptions(HistoryOptions options)
         {
             if (options.MaxCount <= 0)
             {
@@ -193,7 +269,7 @@ namespace Feval.Cli
             else
             {
                 Ops.MaxHistoryCount = options.MaxCount;
-                OpsManager.WriteOptions();
+                await OpsManager.WriteAsync();
             }
         }
 
@@ -239,16 +315,13 @@ namespace Feval.Cli
                 return ret;
             }
 
-            public void WriteOptions()
+            public async Task WriteAsync()
             {
                 try
                 {
-                    if (!Directory.Exists(LocalDataDirectory))
-                    {
-                        Directory.CreateDirectory(LocalDataDirectory);
-                    }
-
-                    File.WriteAllText(SerializedPath, JsonConvert.SerializeObject(Options, Formatting.Indented));
+                    Directory.CreateDirectory(LocalDataDirectory);
+                    await File.WriteAllTextAsync(SerializedPath,
+                        JsonConvert.SerializeObject(Options, Formatting.Indented));
                 }
                 catch (Exception e)
                 {

@@ -10,7 +10,7 @@ namespace Feval.Cli
             OptionsManager = optionsManager;
         }
 
-        public Task Run(IOptionsManager manager)
+        public async Task Run(IOptionsManager manager)
         {
             OptionsManager = manager;
             var options = manager.Options;
@@ -52,7 +52,7 @@ namespace Feval.Cli
                 try
                 {
                     var ret = context.Evaluate(line);
-                    if (options.Default.Verbose)
+                    if (options.Run.Verbose)
                     {
                         Console.WriteLine("Tokens:");
                         Utility.PrintTokens(Console.Out, context.SyntaxTree.Tokens);
@@ -85,7 +85,7 @@ namespace Feval.Cli
                 allHistory.Count - OptionsManager.Options.History.Count);
             if (OptionsManager.Options.AddHistory(newHistory))
             {
-                OptionsManager.WriteOptions();
+                OptionsManager.WriteAsync();
             }
         }
 
