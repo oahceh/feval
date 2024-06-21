@@ -5,113 +5,6 @@ using Parser = CommandLine.Parser;
 
 namespace Feval.Cli
 {
-    internal interface IOptionsManager
-    {
-        Options Options { get; }
-
-        Task WriteAsync();
-    }
-
-    [Verb("history", HelpText = "Set history options")]
-    internal sealed class HistoryOptions
-    {
-        [Option('m', "max", Required = false, HelpText = "Max history count")]
-        public int MaxCount { get; set; } = -1;
-    }
-
-    [Verb("alias", HelpText = "Remote feval service address aliases")]
-    internal sealed class AliasOptions
-    {
-        [Value(0, MetaName = "name", HelpText = "Alias name")]
-        public string Name { get; set; }
-
-        [Value(1, MetaName = "address", HelpText = "Alias name")]
-        public string Address { get; set; }
-    }
-
-    [Verb("using", HelpText = "Set default using namespaces on launch")]
-    internal sealed class UsingOptions
-    {
-        [Option('a', "add", Required = false, HelpText = "Add default using namespaces")]
-        public IEnumerable<string> AddingNamespaces { get; set; }
-
-        [Option('r', "remove", Required = false, HelpText = "Remove default using namespaces")]
-        public IEnumerable<string> RemovingNamespaces { get; set; }
-
-        [Option('c', "clear", Required = false, HelpText = "Clear all default using namespaces")]
-        public bool Clear { get; set; }
-    }
-
-    [Verb("run", isDefault: true, HelpText = "Run in standalone mode")]
-    internal sealed class RunOptions
-    {
-        [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages")]
-        public bool Verbose { get; set; }
-
-        [Option('s', "standalone", Required = false, HelpText = "Running feval on standalone mode")]
-        public bool Standalone { get; set; }
-
-        [Value(0, MetaName = "address", HelpText = "Remote feval service address")]
-        public string Address { get; set; }
-
-        public int Port { get; set; }
-    }
-
-    internal sealed class Options
-    {
-        [JsonProperty("namespaces")]
-        public List<string> DefaultUsingNamespaces { get; set; } = new();
-
-        [JsonProperty("history")]
-        public List<string> History { get; set; } = new();
-
-        [JsonProperty("max_history")]
-        public int MaxHistoryCount { get; set; } = 20;
-
-        [JsonProperty("aliases")]
-        public Dictionary<string, string> Aliases { get; set; } = new();
-
-        [JsonIgnore]
-        public RunOptions Run { get; set; }
-
-        public bool AddHistory(List<string> history)
-        {
-            history.RemoveAll(string.IsNullOrEmpty);
-            EnsureSize(history, MaxHistoryCount);
-
-            var changed = false;
-            if (history.Count > 0)
-            {
-                History.AddRange(history);
-                EnsureSize(History, MaxHistoryCount);
-                changed = true;
-            }
-
-            return changed;
-        }
-
-        public Options StripEmptyHistory()
-        {
-            History.RemoveAll(string.IsNullOrEmpty);
-            return this;
-        }
-
-        public Options EnsureHistoryCount()
-        {
-            EnsureSize(History, MaxHistoryCount);
-            return this;
-        }
-
-        private static void EnsureSize(List<string> items, int count)
-        {
-            var diff = items.Count - count;
-            if (diff > 0)
-            {
-                items.RemoveRange(0, diff);
-            }
-        }
-    }
-
     internal static class Program
     {
         private static async Task Main(string[] args)
@@ -144,36 +37,16 @@ namespace Feval.Cli
                     options.Address = aliasAddress;
                 }
 
-                if (!TryParseAddress(options.Address, out var address, out var port))
+                if (!options.TryParseAddress(out var error))
                 {
-                    AnsiConsole.Write(new Markup($"[red]Invalid address: {options.Address}[/]"));
+                    AnsiConsole.Write(new Markup($"[red]{error}[/]"));
                     return;
                 }
 
-                options.Address = address;
-                options.Port = port;
                 m_Runner = new EvaluationClient();
             }
 
             await m_Runner.Run(OpsManager);
-        }
-
-        private static bool TryParseAddress(string text, out string address, out int port)
-        {
-            address = string.Empty;
-            port = 0;
-
-            try
-            {
-                var words = text.Split(":");
-                address = words.First();
-                port = int.Parse(words.Last());
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
         }
 
         private static void OnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
@@ -241,10 +114,9 @@ namespace Feval.Cli
 
                 AnsiConsole.Write(table);
             }
-            else if (!TryParseAddress(options.Address, out _, out _))
+            else if (!RunOptions.TryParseAddress(options.Address, out var error, out _, out _))
             {
-                AnsiConsole.Write(new Markup($"[red]Invalid address: {options.Address}[/]"));
-                return;
+                AnsiConsole.Write(new Markup($"[red]{error}[/]"));
             }
             else
             {
@@ -282,7 +154,7 @@ namespace Feval.Cli
 
         private static Options Ops => OpsManager.Options;
 
-        private static IOptionsManager OpsManager { get; set; }
+        private static IOptionsManager OpsManager { get; set; } = null!;
 
         private class OptionsManager : IOptionsManager
         {
@@ -305,7 +177,7 @@ namespace Feval.Cli
                         options = JsonConvert.DeserializeObject<Options>(text);
                     }
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     options = new Options();
                 }
