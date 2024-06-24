@@ -67,8 +67,8 @@ namespace Feval.Cli
             try
             {
                 var words = rawAddress.Split(":");
-                address = words.First();
-                port = int.Parse(words.Last());
+                address = words[0];
+                port = int.Parse(words[1]);
                 return true;
             }
             catch (Exception)
