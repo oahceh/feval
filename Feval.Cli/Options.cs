@@ -43,11 +43,15 @@ namespace Feval.Cli
     [Verb("run", isDefault: true, HelpText = "Running in standalone mode or connect a remote service")]
     internal sealed class RunOptions
     {
+        [Option('s', "scan", Required = false,
+            HelpText = "Scan all available service host in local network automatically")]
+        public bool Scan { get; set; }
+
         [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages")]
         public bool Verbose { get; set; }
 
         [Value(0, MetaName = "address", HelpText = $"Remote service address formatted like: {AddressTemplate}")]
-        public string Address { get; set; }
+        public string Address { get; set; } = string.Empty;
 
         public int Port { get; private set; }
 

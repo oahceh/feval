@@ -23,10 +23,19 @@ namespace Feval.Cli
                 );
         }
 
+        private static void OnServiceFound(Host obj)
+        {
+            Console.WriteLine($"Service Found: {obj}");
+        }
+
         private static async Task HandleRunOptions(RunOptions options)
         {
             OpsManager.Options.Run = options;
-            if (options.Verbose || string.IsNullOrEmpty(options.Address))
+            if (options.Scan)
+            {
+                m_Runner = new EvaluationClientRunner();
+            }
+            else if (options.Verbose || string.IsNullOrEmpty(options.Address))
             {
                 m_Runner = new EvaluationStandalone(OpsManager);
             }
@@ -43,7 +52,7 @@ namespace Feval.Cli
                     return;
                 }
 
-                m_Runner = new EvaluationClient();
+                m_Runner = new EvaluationClientRunner();
             }
 
             await m_Runner.Run(OpsManager);
