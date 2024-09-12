@@ -19,8 +19,10 @@ namespace Feval.Cli
 
             m_Client = new EvaluationClient(address, port);
 
-            await AnsiConsole.Status().Spinner(Spinner.Known.Dots).StartAsync("Connecting...",
-                async _ => { await TaskUtility.WaitUntil(() => m_Client.Connected != null); });
+            await AnsiConsole.Status()
+                .Spinner(Spinner.Known.Dots).StartAsync("Connecting...",
+                    async _ => { await TaskUtility.WaitUntil(() => m_Client.Connected != null); }
+                );
             if (m_Client.Connected == false)
             {
                 return;
@@ -46,11 +48,19 @@ namespace Feval.Cli
                 Console.Write(">> ");
                 Console.ResetColor();
 
-                var (withResult, result) = await m_Client.EvaluateAsync(ReadLine.Read());
-
-                if (withResult)
+                var input = ReadLine.Read();
+                if (input.StartsWith("#"))
                 {
-                    Console.WriteLine(result);
+                    await HandleMetaCommands(input[1..]);
+                }
+                else
+                {
+                    var (withResult, result) = await m_Client.EvaluateAsync(input);
+
+                    if (withResult)
+                    {
+                        Console.WriteLine(result);
+                    }
                 }
             }
             // ReSharper disable once FunctionNeverReturns
@@ -88,6 +98,54 @@ namespace Feval.Cli
             }
 
             return (scanner.Hosts[index - 1].ip, scanner.Hosts[index - 1].port);
+        }
+
+        private async Task HandleMetaCommands(string input)
+        {
+            if (input.StartsWith("load"))
+            {
+                var path = input["load".Length..];
+                path = new Uri(path).AbsolutePath;
+                if (File.Exists(path))
+                {
+                    var lines = await File.ReadAllLinesAsync(path);
+                    foreach (var line in lines)
+                    {
+                        if (!string.IsNullOrEmpty(line))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.Write(">> ");
+                            Console.ResetColor();
+                            Console.WriteLine(line);
+                            await m_Client.EvaluateAsync(line);
+                        }
+                    }
+                }
+            }
+            else if (input.StartsWith("dpf"))
+            {
+                try
+                {
+                    var words = input.Split(" ");
+                    var expression = words[1];
+                    var index = input.IndexOf(expression, StringComparison.Ordinal) + expression.Length + 1;
+                    var path = input[index..];
+
+                    var ret = await m_Client.EvaluateAsync($"dump({expression})");
+                    Console.WriteLine(ret);
+
+                    await File.WriteAllTextAsync(path, ret.Item2);
+                    Console.WriteLine($"Dump result has been write to file: {path}");
+                }
+                catch (Exception)
+                {
+                    await Console.Error.WriteLineAsync($"UnInvalid meta command: {input}");
+                }
+            }
+            else
+            {
+                await Console.Error.WriteLineAsync($"Unsupported meta command: {input}");
+            }
         }
 
         public void Quit()

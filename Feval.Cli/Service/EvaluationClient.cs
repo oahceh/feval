@@ -7,7 +7,7 @@ namespace Feval.Cli;
 public sealed class EvaluationClient : IHandlerMessage
 {
     public bool? Connected { get; private set; }
-    
+
     public event Action ConnectFailed;
 
     public event Action Disconnected;
@@ -22,12 +22,6 @@ public sealed class EvaluationClient : IHandlerMessage
     {
         if (string.IsNullOrEmpty(input))
         {
-            return (false, string.Empty);
-        }
-
-        if (input.StartsWith("#"))
-        {
-            await HandleMetaCommands(input[1..]);
             return (false, string.Empty);
         }
 
@@ -74,54 +68,6 @@ public sealed class EvaluationClient : IHandlerMessage
         WaitingForResponse = true;
         await TaskUtility.WaitWhile(() => WaitingForResponse);
         return ReceivedMessage;
-    }
-
-    private async Task HandleMetaCommands(string input)
-    {
-        if (input.StartsWith("load"))
-        {
-            var path = input["load".Length..];
-            path = new Uri(path).AbsolutePath;
-            if (File.Exists(path))
-            {
-                var lines = await File.ReadAllLinesAsync(path);
-                foreach (var line in lines)
-                {
-                    if (!string.IsNullOrEmpty(line))
-                    {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.Write(">> ");
-                        Console.ResetColor();
-                        Console.WriteLine(line);
-                        await EvaluateAsync(line);
-                    }
-                }
-            }
-        }
-        else if (input.StartsWith("dpf"))
-        {
-            try
-            {
-                var words = input.Split(" ");
-                var expression = words[1];
-                var index = input.IndexOf(expression, StringComparison.Ordinal) + expression.Length + 1;
-                var path = input[index..];
-
-                var ret = await EvaluateAsync($"dump({expression})");
-                Console.WriteLine(ret);
-
-                await File.WriteAllTextAsync(path, ret.Item2);
-                Console.WriteLine($"Dump result has been write to file: {path}");
-            }
-            catch (Exception e)
-            {
-                await Console.Error.WriteLineAsync($"Invalid meta command: {input}");
-            }
-        }
-        else
-        {
-            await Console.Error.WriteLineAsync($"Unsupported meta command: {input}");
-        }
     }
 
 
