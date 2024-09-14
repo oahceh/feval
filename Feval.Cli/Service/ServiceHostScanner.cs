@@ -1,4 +1,7 @@
-﻿namespace Feval.Cli;
+﻿using System;
+using System.Collections.Generic;
+
+namespace Feval.Cli;
 
 public class ServiceHostScanner
 {

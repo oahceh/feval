@@ -1,4 +1,6 @@
-﻿namespace Feval.Cli;
+﻿using System;
+
+namespace Feval.Cli;
 
 [Serializable]
 public class Host
