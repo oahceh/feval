@@ -73,6 +73,11 @@ namespace Feval
             return type.GetMethods(name, flags, GetTypes(arguments), false).FirstOrDefault();
         }
 
+        public static MethodInfo GetExtensionMethod(this Type type, string name, object[] arguments)
+        {
+            return ExtensionMethodCache.FindExtensionMethod(type, name, GetTypes(arguments));
+        }
+
         public static object Invoke(this MethodInfo method, object obj, ref object[] arguments,
             bool completingDefaultArgs)
         {
@@ -85,6 +90,11 @@ namespace Feval
             }
 
             return method.Invoke(obj, arguments);
+        }
+
+        public static Type[] OfTypes(this object[] args)
+        {
+            return GetTypes(args);
         }
 
         #endregion

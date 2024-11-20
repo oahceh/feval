@@ -202,6 +202,31 @@ namespace Feval
 
             var type = isStatic ? tns.Types.First() : value.GetType();
             var methodInfo = type.GetMethod(tns.ToBindName, isStatic ? StaticFlags : InstanceFlags, argumentValues);
+
+            // Instance member method not found, try extension methods...
+            var offset = 0;
+            if (!isStatic && methodInfo == null)
+            {
+                // Insert 'this' value to the first argument
+                if (type.IsGenericType)
+                {
+                    // methodInfo = type.GetExtensionMethod(tns.ToBindName, argumentValues);
+                    methodInfo = ExtensionMethodCache
+                        .FindExtensionMethods(tns.ToBindName, value.GetType(), type.GenericTypeArguments,
+                            argumentValues.OfTypes());
+                }
+                else
+                {
+                    methodInfo = type.GetExtensionMethod(tns.ToBindName, argumentValues);
+                }
+
+                if (methodInfo != null)
+                {
+                    argumentValues = argumentValues.Prepend(value).ToArray();
+                    offset = 1;
+                }
+            }
+
             if (methodInfo == null)
             {
                 throw new Exception(
@@ -213,7 +238,7 @@ namespace Feval
             // Write back out variable values
             foreach (var kv in outVariables)
             {
-                kv.Value.Value = argumentValues[kv.Key];
+                kv.Value.Value = argumentValues[kv.Key + offset];
             }
 
             return ret;
@@ -286,6 +311,17 @@ namespace Feval
                     BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic |
                     BindingFlags.FlattenHierarchy,
                     genericArgumentTypes, argumentTypes, null);
+
+                // Try extension methods
+                if (methodInfo == null)
+                {
+                    methodInfo = ExtensionMethodCache
+                        .FindExtensionMethods(tns.ToBindName, value.GetType(), genericArgumentTypes, argumentTypes);
+                    if (methodInfo != null)
+                    {
+                        argumentValues = argumentValues.Prepend(value).ToArray();
+                    }
+                }
             }
             else
             {

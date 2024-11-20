@@ -11,7 +11,7 @@
     <AssemblyName>Feval.Core</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>9</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -36,6 +36,8 @@
     <Compile Include="Evaluator\Context.cs" />
     <Compile Include="Evaluator\DefaultReflector.cs" />
     <Compile Include="Evaluator\Evaluator.cs" />
+    <Compile Include="Evaluator\ExtensionMethodCache.cs" />
+    <Compile Include="Evaluator\ExtensionMethodFinder.cs" />
     <Compile Include="Evaluator\IReflector.cs" />
     <Compile Include="Evaluator\ReflectionUtilities.cs" />
     <Compile Include="Evaluator\Reflector.cs" />
