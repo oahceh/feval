@@ -1,5 +1,6 @@
 using System;
-using System.Text;
+using System.Reflection;
+using Feval.Syntax;
 
 namespace Feval
 {
@@ -67,6 +68,50 @@ namespace Feval
             {
                 fieldInfo.SetValue(instance, value);
             }
+        }
+
+        public static object BitwiseOr(object left, object right)
+        {
+            var leftType = left.GetType();
+            var rightType = right.GetType();
+            if (leftType != rightType)
+            {
+                throw new Exception($"Cannot apply bitwise or operation on different types {leftType} and {rightType}");
+            }
+
+            var isEnum = leftType.IsEnum;
+            var type = isEnum ? Enum.GetUnderlyingType(leftType) : leftType;
+
+            if (type.IsPrimitive)
+            {
+                if (type == typeof(int))
+                {
+                    var value = (int) left | (int) right;
+                    return isEnum ? Enum.ToObject(leftType, value) : value;
+                }
+
+                if (type == typeof(long))
+                {
+                    var value = (long) left | (long) right;
+                    return isEnum ? Enum.ToObject(leftType, value) : value;
+                }
+
+                if (type == typeof(byte))
+                {
+                    var value = (byte) left | (byte) right;
+                    return isEnum ? Enum.ToObject(leftType, value) : value;
+                }
+
+                throw new Exception($"Operator or not supported for type {leftType}");
+            }
+
+            var orMethod = leftType.GetMethod("op_BitwiseOr", BindingFlags.Public | BindingFlags.Static);
+            if (orMethod == null)
+            {
+                throw new Exception($"Cannot find bitwise or operator for type {leftType}");
+            }
+
+            return orMethod.Invoke(null, new[] { left, right });
         }
 
         #endregion

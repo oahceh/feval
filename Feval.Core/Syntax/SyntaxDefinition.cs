@@ -26,7 +26,7 @@ namespace Feval.Syntax
 
         #region Field
 
-        private static readonly Dictionary<string, SyntaxType> m_Keywords = new Dictionary<string, SyntaxType>
+        private static readonly Dictionary<string, SyntaxType> m_Keywords = new()
         {
             { "new", SyntaxType.NewKeyword },
             { "true", SyntaxType.TrueKeyword },
@@ -38,7 +38,7 @@ namespace Feval.Syntax
             { "out", SyntaxType.OutKeyword }
         };
 
-        private static readonly Dictionary<string, Type> m_TypeKeywords = new Dictionary<string, Type>
+        private static readonly Dictionary<string, Type> m_TypeKeywords = new()
         {
             { "string", typeof(string) },
             { "int", typeof(int) },
@@ -47,13 +47,14 @@ namespace Feval.Syntax
             { "double", typeof(double) }
         };
 
-        private static readonly Dictionary<SyntaxType, int> m_BinaryOperatorPriorities = new Dictionary<SyntaxType, int>
+        private static readonly Dictionary<SyntaxType, int> m_BinaryOperatorPriorities = new()
         {
             { SyntaxType.DotToken, 6 },
             { SyntaxType.MultiplyToken, 5 },
             { SyntaxType.DivideToken, 5 },
             { SyntaxType.PlusToken, 4 },
             { SyntaxType.MinusToken, 4 },
+            { SyntaxType.PipeToken, 3 }
         };
 
         #endregion

@@ -102,6 +102,9 @@ namespace Feval.Syntax
                     m_Type = SyntaxType.BackquoteToken;
                     MoveNext();
                     break;
+                case '|':
+                    MoveNextWith(SyntaxType.PipeToken);
+                    break;
                 case '"':
                     ReadString();
                     break;
@@ -139,6 +142,12 @@ namespace Feval.Syntax
             var ret = m_Position;
             m_Position += offset;
             return ret;
+        }
+
+        private int MoveNextWith(SyntaxType type)
+        {
+            m_Type = type;
+            return MoveNext();
         }
 
         private void ReadWhitespace()

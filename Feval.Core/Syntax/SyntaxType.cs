@@ -24,6 +24,7 @@
         EqualsEqualsToken,
         IdentifierToken,
         BackquoteToken,
+        PipeToken,
 
         #endregion
 

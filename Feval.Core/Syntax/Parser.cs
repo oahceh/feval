@@ -7,7 +7,7 @@ namespace Feval.Syntax
     {
         #region Property
 
-        public SyntaxToken[] Tokens => m_Tokens;
+        public SyntaxToken[] Tokens { get; }
 
         #endregion
 
@@ -38,13 +38,12 @@ namespace Feval.Syntax
             } while (syntaxToken.Type != SyntaxType.EndOfFile);
 
             m_SyntaxTree = syntaxTree;
-            m_Text = syntaxTree.Text;
-            m_Tokens = tokens.ToArray();
+            Tokens = tokens.ToArray();
         }
 
         internal ExpressionSyntax Parse()
         {
-            return ParseExpression();
+            return ParseBinaryExpression();
         }
 
         #endregion
@@ -54,7 +53,7 @@ namespace Feval.Syntax
         private SyntaxToken PeekToken(int offset)
         {
             var index = m_Position + offset;
-            return index >= m_Tokens.Length ? m_Tokens[m_Tokens.Length - 1] : m_Tokens[index];
+            return index >= Tokens.Length ? Tokens[Tokens.Length - 1] : Tokens[index];
         }
 
         private SyntaxToken EatToken()
@@ -240,7 +239,7 @@ namespace Feval.Syntax
 
         private ArgumentSyntax ParseArgument()
         {
-            return new ArgumentSyntax(m_SyntaxTree, ParseExpression());
+            return new ArgumentSyntax(m_SyntaxTree, ParseBinaryExpression());
         }
 
         private ParenthesisedArgumentListSyntax ParseParenthesisedArgumentList()
@@ -303,11 +302,7 @@ namespace Feval.Syntax
 
         private readonly SyntaxTree m_SyntaxTree;
 
-        private string m_Text;
-
         private SyntaxToken CurrentToken => PeekToken(0);
-
-        private readonly SyntaxToken[] m_Tokens;
 
         private int m_Position;
 

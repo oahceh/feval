@@ -146,7 +146,19 @@ namespace Feval
         /// </summary>
         private EvaluationResult EvaluateBinaryExpression(BinaryExpressionSyntax expressionSyntax)
         {
-            throw new NotSupportedException(expressionSyntax.Type.ToString());
+            switch (expressionSyntax.Operator.Type)
+            {
+                case SyntaxType.PipeToken:
+                    return new EvaluationResult(
+                        ReflectionUtilities.BitwiseOr(
+                            EvaluateExpression(expressionSyntax.Left).Value,
+                            EvaluateExpression(expressionSyntax.Right).Value
+                        ),
+                        true
+                    );
+                default:
+                    throw new NotSupportedException(expressionSyntax.Type.ToString());
+            }
         }
 
         /// <summary>
@@ -553,6 +565,11 @@ namespace Feval
 
                 // 成员未找到
                 throw new Exception($"Member '{postfixName}' not found");
+            }
+
+            if (prefix.TypeOrNamespace.IsEmpty())
+            {
+                throw new Exception($"Symbol '{prefix.Text}' not found");
             }
 
             // 处理prefix已经找到Type的情况
