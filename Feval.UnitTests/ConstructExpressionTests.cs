@@ -3,52 +3,6 @@ using Xunit.Abstractions;
 
 namespace Feval.UnitTests
 {
-    public class Vector2
-    {
-        public int x;
-
-        public int y;
-
-        public Vector2(int x, int y)
-        {
-            this.x = x;
-            this.y = y;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return Equals(obj as Vector2);
-        }
-
-        protected bool Equals(Vector2 other)
-        {
-            return x == other.x && y == other.y;
-        }
-    }
-
-    public class AddTest
-    {
-        public AddTest(int a, int b)
-        {
-            m_A = a;
-            m_B = b;
-        }
-
-        public int Add()
-        {
-            return Add(m_A, m_B);
-        }
-
-        public static int Add(int a, int b)
-        {
-            return a + b;
-        }
-
-        private readonly int m_A;
-
-        private readonly int m_B;
-    }
-
     public sealed class ConstructExpressionTests : TestCase
     {
         public ConstructExpressionTests(ITestOutputHelper testOutputHelper) : base(testOutputHelper)
