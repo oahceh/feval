@@ -118,12 +118,19 @@ namespace Feval
         {
             ThrowIfArgumentIsNull(a, b);
 
-            // 处理基础数值类型相加
+            // String
+            if (a is string || b is string)
+            {
+                return a.ToString() + b;
+            }
+
+            // Numeric primitive types...
             if (IsNumericType(a.GetType()) && IsNumericType(b.GetType()))
             {
                 return AddNumeric(a, b);
             }
 
+            // Custom types...
             return Operator("op_Addition", a, b);
         }
 

@@ -27,6 +27,12 @@ namespace Feval.UnitTests
 
             Separator();
 
+            WriteLine("Add two strings:");
+            Eval("\"Hello\" + \"World\"");
+            Assert.Equal("Hello" + "World", retValue);
+
+            Separator();
+
             WriteLine("Add float and int:");
             Eval("1.0 + 2");
             Assert.Equal(1.0f + 2, retValue);
@@ -113,6 +119,14 @@ namespace Feval.UnitTests
             Eval("using Feval.UnitTests");
             Eval("new Vector2(4, 6) / 2");
             Assert.Equal(new Vector2(4, 6) / 2, retValue);
+        }
+
+        [Fact]
+        public void Assignment()
+        {
+            Eval("a = 2 * 3");
+            Eval("a");
+            Assert.Equal(2 * 3, retValue);
         }
     }
 }

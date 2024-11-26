@@ -92,7 +92,6 @@ namespace Feval.Syntax
             {
                 var priority = SyntaxDefinition.GetBinaryOperatorPriority(CurrentToken.Type);
                 // 当前Token不是二元运算符或低于上一层运算符的优先级, 则返回上一层，同上一层继续尝试结合
-                // 简直是妙蛙种子进了米奇妙妙屋，妙到家了。。。
                 if (priority == 0 || priority < parentPriority)
                 {
                     break;
@@ -229,7 +228,7 @@ namespace Feval.Syntax
                         break;
                     case SyntaxType.EqualsToken:
                         expression = new AssignmentExpressionSyntax(m_SyntaxTree, expression,
-                            EatToken(), ParseExpression());
+                            EatToken(), ParseBinaryExpression());
                         break;
                     default:
                         return expression;
