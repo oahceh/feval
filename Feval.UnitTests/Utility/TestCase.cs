@@ -30,6 +30,11 @@ namespace Feval.UnitTests
             m_Output.WriteLine(text);
         }
 
+        protected void Separator()
+        {
+            WriteLine();
+        }
+
         protected readonly Context context;
 
         private readonly ITestOutputHelper m_Output;

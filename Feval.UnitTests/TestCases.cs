@@ -50,9 +50,44 @@
             return Equals(obj as Vector2);
         }
 
+        public static Vector2 operator +(Vector2 a, Vector2 b)
+        {
+            return new Vector2(a.x + b.x, a.y + b.y);
+        }
+
+        public static Vector2 operator -(Vector2 a, Vector2 b)
+        {
+            return new Vector2(a.x - b.x, a.y - b.y);
+        }
+
+        public static Vector2 operator +(Vector2 a, int v)
+        {
+            return new Vector2(a.x + v, a.y + v);
+        }
+
+        public static Vector2 operator -(Vector2 a, int v)
+        {
+            return new Vector2(a.x - v, a.y - v);
+        }
+
+        public static Vector2 operator *(Vector2 a, int v)
+        {
+            return new Vector2(a.x * v, a.y * v);
+        }
+
+        public static Vector2 operator /(Vector2 a, int v)
+        {
+            return new Vector2(a.x / v, a.y / v);
+        }
+
         protected bool Equals(Vector2 other)
         {
             return x == other.x && y == other.y;
+        }
+
+        public override string ToString()
+        {
+            return $"[{x}, {y}]";
         }
     }
 

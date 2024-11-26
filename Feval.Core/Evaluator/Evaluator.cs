@@ -148,6 +148,38 @@ namespace Feval
         {
             switch (expressionSyntax.Operator.Type)
             {
+                case SyntaxType.PlusToken:
+                    return new EvaluationResult(
+                        ReflectionUtilities.OperatorAdd(
+                            EvaluateExpression(expressionSyntax.Left).Value,
+                            EvaluateExpression(expressionSyntax.Right).Value
+                        ),
+                        true
+                    );
+                case SyntaxType.MinusToken:
+                    return new EvaluationResult(
+                        ReflectionUtilities.OperatorSubtraction(
+                            EvaluateExpression(expressionSyntax.Left).Value,
+                            EvaluateExpression(expressionSyntax.Right).Value
+                        ),
+                        true
+                    );
+                case SyntaxType.MultiplyToken:
+                    return new EvaluationResult(
+                        ReflectionUtilities.OperatorMultiply(
+                            EvaluateExpression(expressionSyntax.Left).Value,
+                            EvaluateExpression(expressionSyntax.Right).Value
+                        ),
+                        true
+                    );
+                case SyntaxType.DivideToken:
+                    return new EvaluationResult(
+                        ReflectionUtilities.OperatorDivision(
+                            EvaluateExpression(expressionSyntax.Left).Value,
+                            EvaluateExpression(expressionSyntax.Right).Value
+                        ),
+                        true
+                    );
                 case SyntaxType.PipeToken:
                     return new EvaluationResult(
                         ReflectionUtilities.BitwiseOr(

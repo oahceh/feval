@@ -80,7 +80,7 @@ namespace Feval.Syntax
                     MoveNext();
                     break;
                 case '/':
-                    m_Type = SyntaxType.DivideToken;
+                    MoveNextWith(SyntaxType.DivideToken);
                     break;
                 case ',':
                     m_Type = SyntaxType.CommaToken;
@@ -144,6 +144,7 @@ namespace Feval.Syntax
             return ret;
         }
 
+        // ReSharper disable once UnusedMethodReturnValue.Local
         private int MoveNextWith(SyntaxType type)
         {
             m_Type = type;
