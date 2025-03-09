@@ -35,6 +35,7 @@
   <ItemGroup>
     <Compile Include="Evaluator\Context.cs" />
     <Compile Include="Evaluator\DefaultReflector.cs" />
+    <Compile Include="Evaluator\EvaluationResult.cs" />
     <Compile Include="Evaluator\Evaluator.cs" />
     <Compile Include="Evaluator\ExtensionMethodCache.cs" />
     <Compile Include="Evaluator\ExtensionMethodFinder.cs" />
@@ -46,6 +47,7 @@
     <Compile Include="Symbol\FunctionSymbol.cs" />
     <Compile Include="Symbol\ObjDumper.cs" />
     <Compile Include="Symbol\Symbol.cs" />
+    <Compile Include="Symbol\SymbolExtensions.cs" />
     <Compile Include="Symbol\SymbolType.cs" />
     <Compile Include="Symbol\VariableSymbol.cs" />
     <Compile Include="Syntax\Expression\ArgumentListSyntax.cs" />

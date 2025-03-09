@@ -8,36 +8,6 @@ using Feval.Syntax;
 
 namespace Feval
 {
-    public readonly struct EvaluationResult
-    {
-        public bool WithReturn { get; }
-
-        public object Value { get; }
-
-        public EvaluationResult(object value, bool withReturn)
-        {
-            Value = value;
-            WithReturn = withReturn;
-        }
-
-        public static EvaluationResult Void => new EvaluationResult(null, false);
-
-        public override string ToString()
-        {
-            if (Value == null)
-            {
-                return "null";
-            }
-
-            if (Value is string str)
-            {
-                return $"\"{str}\"";
-            }
-
-            return Value.ToString();
-        }
-    }
-
     internal sealed class Evaluator
     {
         #region Interface
@@ -133,12 +103,12 @@ namespace Feval
         /// </summary>
         private EvaluationResult EvaluateLiteralExpression(LiteralExpressionSyntax expressionSyntax)
         {
-            return new EvaluationResult(expressionSyntax.Value, true);
+            return EvaluationResult.FromValue(expressionSyntax.Value);
         }
 
         private EvaluationResult EvaluateOutExpression(OutExpressionSyntax expression)
         {
-            return new EvaluationResult(m_Context.SetVariable(expression.Identifier.Text, null), true);
+            return EvaluationResult.FromValue(m_Context.SetVariable(expression.Identifier.Text, null));
         }
 
         /// <summary>
@@ -149,44 +119,39 @@ namespace Feval
             switch (expressionSyntax.Operator.Type)
             {
                 case SyntaxType.PlusToken:
-                    return new EvaluationResult(
+                    return EvaluationResult.FromValue(
                         ReflectionUtilities.OperatorAdd(
                             EvaluateExpression(expressionSyntax.Left).Value,
                             EvaluateExpression(expressionSyntax.Right).Value
-                        ),
-                        true
+                        )
                     );
                 case SyntaxType.MinusToken:
-                    return new EvaluationResult(
+                    return EvaluationResult.FromValue(
                         ReflectionUtilities.OperatorSubtraction(
                             EvaluateExpression(expressionSyntax.Left).Value,
                             EvaluateExpression(expressionSyntax.Right).Value
-                        ),
-                        true
+                        )
                     );
                 case SyntaxType.MultiplyToken:
-                    return new EvaluationResult(
+                    return EvaluationResult.FromValue(
                         ReflectionUtilities.OperatorMultiply(
                             EvaluateExpression(expressionSyntax.Left).Value,
                             EvaluateExpression(expressionSyntax.Right).Value
-                        ),
-                        true
+                        )
                     );
                 case SyntaxType.DivideToken:
-                    return new EvaluationResult(
+                    return EvaluationResult.FromValue(
                         ReflectionUtilities.OperatorDivision(
                             EvaluateExpression(expressionSyntax.Left).Value,
                             EvaluateExpression(expressionSyntax.Right).Value
-                        ),
-                        true
+                        )
                     );
                 case SyntaxType.PipeToken:
-                    return new EvaluationResult(
+                    return EvaluationResult.FromValue(
                         ReflectionUtilities.BitwiseOr(
                             EvaluateExpression(expressionSyntax.Left).Value,
                             EvaluateExpression(expressionSyntax.Right).Value
-                        ),
-                        true
+                        )
                     );
                 default:
                     throw new NotSupportedException(expressionSyntax.Type.ToString());
@@ -221,7 +186,7 @@ namespace Feval
             // Built-in or Local function
             if (expression.Expression.Symbol is FunctionSymbol functionSymbol)
             {
-                return new EvaluationResult(functionSymbol.MethodInfo.Invoke(null, argumentValues.ToArray()), true);
+                return functionSymbol.Invoke(argumentValues);
             }
 
             // Find out variables
@@ -320,7 +285,7 @@ namespace Feval
 
             if (ctor == null)
             {
-                throw new Exception($"Constructor not found");
+                throw new Exception("Constructor not found");
             }
 
             // 为实参补齐默认参数
@@ -330,7 +295,7 @@ namespace Feval
                 argumentValues.Add(Type.Missing);
             }
 
-            return new EvaluationResult(ctor.Invoke(argumentValues.ToArray()), true);
+            return EvaluationResult.FromValue(ctor.Invoke(argumentValues.ToArray()));
         }
 
         /// <summary>
@@ -388,7 +353,7 @@ namespace Feval
         private static EvaluationResult InvokeMethod(MethodInfo method, object thisValue, ref object[] argumentValues)
         {
             var ret = method.Invoke(thisValue, ref argumentValues, true);
-            return method.ReturnType == typeof(void) ? EvaluationResult.Void : new EvaluationResult(ret, true);
+            return method.ReturnType == typeof(void) ? EvaluationResult.Void : EvaluationResult.FromValue(ret);
         }
 
         /// <summary>
@@ -410,7 +375,7 @@ namespace Feval
                 InstanceFlags | BindingFlags.OptionalParamBinding | BindingFlags.InvokeMethod,
                 null,
                 obj, new[] { indexKey });
-            return new EvaluationResult(ret, true);
+            return EvaluationResult.FromValue(ret);
         }
 
         private EvaluationResult EvaluateIdentifierNameExpression(IdentifierNameSyntax nameSyntax)
@@ -437,10 +402,10 @@ namespace Feval
                         };
                     }
 
-                    return new EvaluationResult(value, true);
+                    return EvaluationResult.FromValue(value);
                 }
 
-                return new EvaluationResult(symbol, true);
+                return EvaluationResult.FromValue(symbol);
             }
 
             if (!m_Context.TryLookupTypeOrNamespace(name, out var @namespace, out var types))
@@ -460,7 +425,7 @@ namespace Feval
                 Types = types
             };
 
-            return new EvaluationResult(null, false);
+            return EvaluationResult.Void;
         }
 
         private EvaluationResult EvaluateTypeOfExpression(TypeOfExpressionSyntax expression)
@@ -473,13 +438,13 @@ namespace Feval
                 throw new Exception($"Type {expression.TypeExpression} not found");
             }
 
-            return new EvaluationResult(type, true);
+            return EvaluationResult.FromValue(type);
         }
 
         private EvaluationResult EvaluateDeclarationExpression(DeclarationExpressionSyntax expression)
         {
             m_Context.CreateVariable(expression.VariableName);
-            return new EvaluationResult(EvaluateExpression(expression.AssignmentExpressionSyntax), true);
+            return EvaluationResult.FromValue(EvaluateExpression(expression.AssignmentExpressionSyntax));
         }
 
         private EvaluationResult EvaluateUsingExpression(UsingExpressionSyntax expression)
@@ -513,33 +478,32 @@ namespace Feval
             var value = EvaluateExpression(expression.Operand).Value;
             if (value is int intValue)
             {
-                return new EvaluationResult(intValue * -1, true);
+                return EvaluationResult.FromValue(intValue * -1);
             }
 
             if (value is long longValue)
             {
-                return new EvaluationResult(longValue * -1, true);
+                return EvaluationResult.FromValue(longValue * -1);
             }
 
             if (value is float floatValue)
             {
-                return new EvaluationResult(floatValue * -1, true);
+                return EvaluationResult.FromValue(floatValue * -1);
             }
 
             if (value is double doubleValue)
             {
-                return new EvaluationResult(doubleValue * -1, true);
+                return EvaluationResult.FromValue(doubleValue * -1);
             }
 
-            return new EvaluationResult(value.GetType()
-                .GetMethod("op_UnaryNegation", BindingFlags.Static | BindingFlags.Public)
-                ?.Invoke(null, null), true);
+            return EvaluationResult.FromValue(value.GetType()
+                .GetMethod("op_UnaryNegation", BindingFlags.Static | BindingFlags.Public)?.Invoke(null, null));
         }
 
         private EvaluationResult EvaluateBackquoteUnaryExpression(UnaryExpressionSyntax expression)
         {
             var value = EvaluateExpression(expression.Operand).Value;
-            return new EvaluationResult(ObjDumper.Dump(value), true);
+            return EvaluationResult.FromValue(ObjDumper.Dump(value));
         }
 
         private EvaluationResult EvaluateStringInterpolationExpression(StringInterpolationExpressionSyntax expression)
@@ -556,7 +520,7 @@ namespace Feval
             }
 
             builder.Append(text.Substring(index));
-            return new EvaluationResult(builder.ToString(), true);
+            return EvaluationResult.FromValue(builder.ToString());
         }
 
         private EvaluationResult EvaluateMemberAccessExpression(MemberAccessExpressionSyntax expression)
@@ -580,7 +544,7 @@ namespace Feval
                     // prefix.postfixName是一个方法
                     tns.Types = new List<Type> { prefix.Value.GetType() };
                     tns.Namespace = prefix.Value.GetType().Namespace;
-                    return new EvaluationResult(prefix.Value, true);
+                    return EvaluationResult.FromValue(prefix.Value);
                 }
 
                 // prefix.postfixName是一个字段或属性
@@ -592,7 +556,7 @@ namespace Feval
                         tns.Namespace = value.GetType().Namespace;
                     }
 
-                    return new EvaluationResult(value, true);
+                    return EvaluationResult.FromValue(value);
                 }
 
                 // 成员未找到
@@ -626,7 +590,7 @@ namespace Feval
                         expression.TypeOrNamespace = tns;
                     }
 
-                    return new EvaluationResult(value, true);
+                    return EvaluationResult.FromValue(value);
                 }
 
                 // 2.嵌套类型
@@ -635,7 +599,7 @@ namespace Feval
                     tns.Types = types;
                     tns.Namespace = prefix.TypeOrNamespace.Namespace;
                     expression.TypeOrNamespace = tns;
-                    return new EvaluationResult(null, false);
+                    return EvaluationResult.Void;
                 }
 
                 // 3.方法(静态)
@@ -645,14 +609,14 @@ namespace Feval
                 tns.Types = prefix.TypeOrNamespace.Types;
                 tns.Namespace = prefix.TypeOrNamespace.Namespace;
                 expression.TypeOrNamespace = tns;
-                return new EvaluationResult(null, false);
+                return EvaluationResult.Void;
             }
 
             // 还未找到Type的情况
             tns.Namespace = m_Context.IsNamespace(qualifiedName) ? qualifiedName : prefix.TypeOrNamespace.Namespace;
             tns.Types = types;
             expression.TypeOrNamespace = tns;
-            return new EvaluationResult(null, false);
+            return EvaluationResult.Void;
         }
 
         /// <summary>
@@ -695,7 +659,7 @@ namespace Feval
                 }
             }
 
-            return new EvaluationResult(value, true);
+            return EvaluationResult.FromValue(value);
         }
 
         #endregion

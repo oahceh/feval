@@ -82,10 +82,17 @@ namespace Feval
 
         public EvaluationResult Evaluate(string text)
         {
-            var ret = m_Evaluator.Evaluate(text, out var tree);
-            SyntaxTree = tree;
-            SetVariable(LastAnswerVariableName, ret.Value);
-            return ret;
+            try
+            {
+                var ret = m_Evaluator.Evaluate(text, out var tree);
+                SyntaxTree = tree;
+                SetVariable(LastAnswerVariableName, ret.Value);
+                return ret;
+            }
+            catch (Exception e)
+            {
+                return EvaluationResult.FromException(e);
+            }
         }
 
         public Context WithReferences(IEnumerable<Assembly> assemblies)

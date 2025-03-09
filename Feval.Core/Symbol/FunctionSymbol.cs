@@ -2,7 +2,7 @@
 
 namespace Feval
 {
-    public sealed class FunctionSymbol : Symbol
+    internal sealed class FunctionSymbol : Symbol
     {
         public override SymbolType Type => SymbolType.Function;
 
