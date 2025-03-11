@@ -43,6 +43,7 @@
     <Compile Include="Evaluator\ReflectionUtilities.cs" />
     <Compile Include="Evaluator\Reflector.cs" />
     <Compile Include="Evaluator\Type.Extensions.cs" />
+    <Compile Include="Exceptions.cs" />
     <Compile Include="Symbol\BuiltinFunctions.cs" />
     <Compile Include="Symbol\FunctionSymbol.cs" />
     <Compile Include="Symbol\ObjDumper.cs" />

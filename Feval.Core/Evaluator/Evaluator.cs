@@ -206,7 +206,7 @@ namespace Feval
 
             if (isStatic && tns.IsEmpty())
             {
-                throw new Exception($"Symbol '{expression.Expression.Text}' not found");
+                throw new SymbolNotFoundException(expression.Expression.Text);
             }
 
             var type = isStatic ? tns.Types.First() : value.GetType();
@@ -238,8 +238,7 @@ namespace Feval
 
             if (methodInfo == null)
             {
-                throw new Exception(
-                    $"Method '{TypeExtensions.FormatMethodName(tns.ToBindName, argumentValues)}' not found");
+                throw new MethodNotFoundException(TypeExtensions.FormatMethodName(tns.ToBindName, argumentValues));
             }
 
             var ret = InvokeMethod(methodInfo, value, ref argumentValues);
@@ -285,7 +284,7 @@ namespace Feval
 
             if (ctor == null)
             {
-                throw new Exception("Constructor not found");
+                throw new MethodNotFoundException("Constructor");
             }
 
             // 为实参补齐默认参数
@@ -344,7 +343,7 @@ namespace Feval
 
             if (methodInfo == null)
             {
-                throw new Exception($"Failed to find generic method: {tns.ToBindName}");
+                throw new GenericMethodNotFoundException(tns.ToBindName);
             }
 
             return InvokeMethod(methodInfo, value, ref argumentValues);
@@ -416,7 +415,7 @@ namespace Feval
 
             if (@namespace == null && types == null)
             {
-                throw new Exception($"Type or namespace {name} not found");
+                throw new SymbolNotFoundException(name);
             }
 
             nameSyntax.TypeOrNamespace = new TypeOrNamespace
@@ -432,10 +431,10 @@ namespace Feval
         {
             EvaluateExpression(expression.TypeExpression);
             var tns = expression.TypeExpression.TypeOrNamespace;
-            var type = tns.Types.First();
+            var type = tns.Types.FirstOrDefault();
             if (type == null)
             {
-                throw new Exception($"Type {expression.TypeExpression} not found");
+                throw new TypeNotFoundException($"{expression.TypeExpression}");
             }
 
             return EvaluationResult.FromValue(type);
@@ -560,12 +559,12 @@ namespace Feval
                 }
 
                 // 成员未找到
-                throw new Exception($"Member '{postfixName}' not found");
+                throw new MemberNotFoundException(postfixName);
             }
 
             if (prefix.TypeOrNamespace.IsEmpty())
             {
-                throw new Exception($"Symbol '{prefix.Text}' not found");
+                throw new SymbolNotFoundException(prefix.Text);
             }
 
             // 处理prefix已经找到Type的情况
@@ -578,6 +577,15 @@ namespace Feval
                 {
                     if (!type.TryGetMemberValue(postfixName, out var value))
                     {
+                        var nestedType = type.GetNestedType(postfixName, BindingFlags.Public | BindingFlags.NonPublic);
+                        if (nestedType != null)
+                        {
+                            tns.Types = new List<Type> { nestedType };
+                            tns.Namespace = nestedType.Namespace;
+                            expression.TypeOrNamespace = tns;
+                            return EvaluationResult.Void;
+                        }
+
                         continue;
                     }
 

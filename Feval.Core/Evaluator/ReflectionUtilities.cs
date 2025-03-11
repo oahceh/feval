@@ -76,7 +76,7 @@ namespace Feval
             var rightType = right.GetType();
             if (leftType != rightType)
             {
-                throw new Exception($"Cannot apply bitwise or operation on different types {leftType} and {rightType}");
+                throw new EvaluateException($"Cannot apply bitwise or operation on different types {leftType} and {rightType}");
             }
 
             var isEnum = leftType.IsEnum;
@@ -102,13 +102,13 @@ namespace Feval
                     return isEnum ? Enum.ToObject(leftType, value) : value;
                 }
 
-                throw new Exception($"Operator or not supported for type {leftType}");
+                throw new EvaluateException($"Operator or not supported for type {leftType}");
             }
 
             var orMethod = leftType.GetMethod("op_BitwiseOr", BindingFlags.Public | BindingFlags.Static);
             if (orMethod == null)
             {
-                throw new Exception($"Cannot find bitwise or operator for type {leftType}");
+                throw new EvaluateException($"Cannot find bitwise or operator for type {leftType}");
             }
 
             return orMethod.Invoke(null, new[] { left, right });
@@ -217,7 +217,7 @@ namespace Feval
                 case TypeCode.Decimal:
                     return Convert.ToDecimal(a) - Convert.ToDecimal(b);
                 default:
-                    throw new InvalidOperationException("Unsupported numeric type.");
+                    throw new EvaluateException("Unsupported numeric type.");
             }
         }
 
@@ -249,7 +249,7 @@ namespace Feval
                 case TypeCode.Decimal:
                     return Convert.ToDecimal(a) * Convert.ToDecimal(b);
                 default:
-                    throw new InvalidOperationException("Unsupported numeric type.");
+                    throw new EvaluateException("Unsupported numeric type.");
             }
         }
 
@@ -281,7 +281,7 @@ namespace Feval
                 case TypeCode.Decimal:
                     return Convert.ToDecimal(a) / Convert.ToDecimal(b);
                 default:
-                    throw new InvalidOperationException("Unsupported numeric type.");
+                    throw new EvaluateException("Unsupported numeric type.");
             }
         }
 
@@ -313,7 +313,7 @@ namespace Feval
                 case TypeCode.Decimal:
                     return Convert.ToDecimal(a) + Convert.ToDecimal(b);
                 default:
-                    throw new InvalidOperationException("Unsupported numeric type.");
+                    throw new EvaluateException("Unsupported numeric type.");
             }
         }
 
@@ -324,7 +324,7 @@ namespace Feval
 
             if (indexA == -1 || indexB == -1)
             {
-                throw new ArgumentException("Unsupported numeric type.");
+                throw new EvaluateException("Unsupported numeric type.");
             }
 
             return indexA > indexB ? typeA : typeB;
@@ -340,7 +340,7 @@ namespace Feval
                 return operatorMethod.Invoke(null, new[] { a, b });
             }
 
-            throw new InvalidOperationException(
+            throw new EvaluateException(
                 $"The type {a.GetType().FullName} does not overload the '{operatorName}' operator.");
         }
 

@@ -70,7 +70,8 @@ namespace Feval.Syntax
                 return EatToken();
             }
 
-            throw new Exception($"Syntax Error: unexpected token '{CurrentToken.Text}' while {type} expected");
+            throw new SyntaxErrorException(
+                $"Syntax Error: unexpected token '{CurrentToken.Text}' while {type} expected");
         }
 
         private ExpressionSyntax ParseExpression()
@@ -151,7 +152,7 @@ namespace Feval.Syntax
                 case SyntaxType.DollarToken:
                     return ParseStringInterpolationSyntax();
                 default:
-                    throw new Exception($"Syntax Error: Unexpected token {CurrentToken}");
+                    throw new SyntaxErrorException($"Syntax Error: Unexpected token {CurrentToken}");
             }
         }
 

@@ -130,7 +130,7 @@ namespace Feval.Syntax
                     }
                     else
                     {
-                        throw new Exception($"Illegal character: {Current}");
+                        throw new SyntaxErrorException($"Illegal character: {Current}");
                     }
 
                     break;
@@ -173,7 +173,7 @@ namespace Feval.Syntax
                     case '\0':
                     case '\r':
                     case '\n':
-                        throw new Exception($"Syntax Error: illegal string {StringBuilder}");
+                        throw new SyntaxErrorException($"Syntax Error: illegal string {StringBuilder}");
                     case '"':
                         if (Peek(1) == '"')
                         {
@@ -217,7 +217,7 @@ namespace Feval.Syntax
             {
                 if (!float.TryParse(text, out var value))
                 {
-                    throw new Exception($"Syntax Error: illegal float number {text}");
+                    throw new SyntaxErrorException($"Syntax Error: illegal float number {text}");
                 }
 
                 m_Type = SyntaxType.FloatLiteral;
@@ -237,7 +237,7 @@ namespace Feval.Syntax
                 }
                 else
                 {
-                    throw new Exception($"Syntax Error: illegal number {text}");
+                    throw new SyntaxErrorException($"Syntax Error: illegal number {text}");
                 }
             }
         }

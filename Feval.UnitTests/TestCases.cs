@@ -1,5 +1,13 @@
 ﻿namespace Feval.UnitTests
 {
+    public static class ParentType
+    {
+        internal static class NestedType
+        {
+            internal static string Name => "Hello NestedType";
+        }
+    }
+
     public class InstanceMethodCall
     {
         public int IntValue { get; private set; }
