@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Text.Json.Serialization;
 using CommandLine;
 using Newtonsoft.Json;
 
@@ -40,14 +42,73 @@ namespace Feval.Cli
         public bool Clear { get; set; }
     }
 
+    [Verb("config", HelpText = "Config feval command line tool")]
+    internal sealed class ConfigOptions
+    {
+        [Value(0, MetaName = "key", Required = false, HelpText = "Configuration key")]
+        public string Key { get; set; }
+
+        [Value(1, MetaName = "value", Required = false, HelpText = "Configuration value")]
+        public string Value { get; set; }
+
+        [Option('l', "list", Required = false, HelpText = "List all configurations")]
+        public bool List { get; set; }
+    }
+
+    [AttributeUsage(AttributeTargets.Field)]
+    internal sealed class ConfigurationKeyAttribute : Attribute
+    {
+        public string HelpText { get; set; }
+    }
+
+    internal static class ConfigurationKeys
+    {
+        [ConfigurationKey(HelpText = "Default remote service port")]
+        public const string DefaultPort = "port.default";
+
+        [ConfigurationKey(HelpText = "Max history count")]
+        public const string MaxHistory = "history.max";
+
+        public static List<string> All()
+        {
+            return typeof(ConfigurationKeys).GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Where(field => field.FieldType == typeof(string) &&
+                                field is { IsLiteral: true, IsInitOnly: false } &&
+                                Attribute.IsDefined(field, typeof(ConfigurationKeyAttribute)))
+                .Select(prop => prop.GetValue(null) as string)
+                .Where(value => !string.IsNullOrEmpty(value))
+                .ToList()!;
+        }
+
+        public static string GetHelpText()
+        {
+            var helpTexts = typeof(ConfigurationKeys).GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Where(field =>
+                    field.FieldType == typeof(string) && Attribute.IsDefined(field, typeof(ConfigurationKeyAttribute)))
+                .Select(field => new
+                {
+                    Key = field.GetValue(null) as string,
+                    Text = ((ConfigurationKeyAttribute) Attribute.GetCustomAttribute(field,
+                        typeof(ConfigurationKeyAttribute)))?.HelpText
+                })
+                .Where(item => !string.IsNullOrEmpty(item.Key) && !string.IsNullOrEmpty(item.Text))
+                .ToList();
+
+            return string.Join(Environment.NewLine, helpTexts.Select(item => $"{item.Key}: {item.Text}"));
+        }
+    }
+
     [Verb("run", isDefault: true, HelpText = "Running in standalone mode or connect a remote service")]
     internal sealed class RunOptions
     {
+        [Option("standalone", Required = false, HelpText = "Running in standalone mode")]
+        public bool Standalone { get; set; }
+
         [Option('s', "scan", Required = false,
             HelpText = "Scan all available service host in local network automatically")]
         public bool Scan { get; set; }
 
-        [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages")]
+        [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages (standalone mode only)")]
         public bool Verbose { get; set; }
 
         [Value(0, MetaName = "address", HelpText = $"Remote service address formatted like: {AddressTemplate}")]
@@ -57,34 +118,11 @@ namespace Feval.Cli
 
         public bool TryParseAddress(out string error)
         {
-            var ret = TryParseAddress(Address, out error, out var address, out var port);
+            var ret = Address.TryParseIPAddress(out var address, out var port);
+            error = "Invalid address";
             Address = address;
             Port = port;
             return ret;
-        }
-
-        public static bool TryParseAddress(string rawAddress, out string error, out string address, out int port)
-        {
-            error = string.Empty;
-            address = string.Empty;
-            port = 0;
-            try
-            {
-                var words = rawAddress.Split(":");
-                address = words[0];
-                port = int.Parse(words[1]);
-                return true;
-            }
-            catch (Exception)
-            {
-                error = InvalidAddressError(rawAddress);
-                return false;
-            }
-        }
-
-        private static string InvalidAddressError(string address)
-        {
-            return $"Invalid address: '{address}', please enter a valid address formatted like: {AddressTemplate}";
         }
 
         private const string AddressTemplate = "127.0.0.1:9999";
@@ -98,13 +136,15 @@ namespace Feval.Cli
         [JsonProperty("history")]
         public List<string> History { get; set; } = new();
 
-        [JsonProperty("max_history")]
-        public int MaxHistoryCount { get; set; } = 20;
+        public int MaxHistoryCount => int.Parse(Configurations.GetValueOrDefault(ConfigurationKeys.MaxHistory, "20"));
 
         [JsonProperty("aliases")]
         public Dictionary<string, string> Aliases { get; set; } = new();
 
-        [JsonIgnore]
+        [JsonProperty("configurations")]
+        public Dictionary<string, string> Configurations { get; set; } = new();
+
+        [Newtonsoft.Json.JsonIgnore]
         public RunOptions Run { get; set; }
 
         public bool AddHistory(List<string> history)

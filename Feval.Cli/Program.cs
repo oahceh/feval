@@ -13,29 +13,20 @@ namespace Feval.Cli
             Console.CancelKeyPress += OnCancelKeyPress;
             OpsManager = new OptionsManager(OptionsPath);
 
-            await Parser.Default.ParseArguments<RunOptions, UsingOptions, AliasOptions, HistoryOptions>(args)
+            await Parser.Default.ParseArguments<RunOptions, UsingOptions, AliasOptions, ConfigOptions>(args)
                 .MapResult(
                     (RunOptions options) => HandleRunOptions(options),
                     (UsingOptions options) => HandleUsingOptions(options),
                     (AliasOptions options) => HandleAliasOptions(options),
-                    (HistoryOptions options) => HandleHistoryOptions(options),
+                    (ConfigOptions options) => HandleConfigOptions(options),
                     _ => Task.FromResult(0)
                 );
-        }
-
-        private static void OnServiceFound(Host obj)
-        {
-            Console.WriteLine($"Service Found: {obj}");
         }
 
         private static async Task HandleRunOptions(RunOptions options)
         {
             OpsManager.Options.Run = options;
-            if (options.Scan)
-            {
-                m_Runner = new EvaluationClientRunner();
-            }
-            else if (options.Verbose || string.IsNullOrEmpty(options.Address))
+            if (options.Standalone)
             {
                 m_Runner = new EvaluationStandalone(OpsManager);
             }
@@ -109,6 +100,50 @@ namespace Feval.Cli
             }
         }
 
+        private static async Task HandleConfigOptions(ConfigOptions options)
+        {
+            if (options.List)
+            {
+                var table = new Table();
+                table.AddColumn(new TableColumn("Key").Centered());
+                table.AddColumn("Value");
+                foreach (var kv in Ops.Configurations)
+                {
+                    table.AddRow(kv.Key, $"[green]{kv.Value}[/]");
+                }
+
+                AnsiConsole.Write(table);
+                return;
+            }
+
+            switch (options.Key)
+            {
+                case ConfigurationKeys.MaxHistory:
+                    if (!int.TryParse(options.Value, out _))
+                    {
+                        AnsiConsole.Write(new Markup($"[red]Invalid max history number: {options.Key}[/]"));
+                        return;
+                    }
+
+                    break;
+                case ConfigurationKeys.DefaultPort:
+                    if (!int.TryParse(options.Value, out _))
+                    {
+                        AnsiConsole.Write(new Markup($"[red]Invalid port number: {options.Key}[/]"));
+                        return;
+                    }
+
+                    break;
+                default:
+                    AnsiConsole.Write(new Markup($"[red]Invalid configuration key: {options.Key}[/]"));
+                    AnsiConsole.Write(ConfigurationKeys.GetHelpText());
+                    return;
+            }
+
+            Ops.Configurations[options.Key] = options.Value;
+            await OpsManager.WriteAsync();
+        }
+
         private static async Task HandleAliasOptions(AliasOptions options)
         {
             if (string.IsNullOrEmpty(options.Name) && string.IsNullOrEmpty(options.Address))
@@ -123,33 +158,13 @@ namespace Feval.Cli
 
                 AnsiConsole.Write(table);
             }
-            else if (!RunOptions.TryParseAddress(options.Address, out var error, out _, out _))
+            else if (!options.Address.IsValidIPAddress())
             {
-                AnsiConsole.Write(new Markup($"[red]{error}[/]"));
+                AnsiConsole.Write(new Markup($"[red]Invalid address[/]"));
             }
             else
             {
                 Ops.Aliases[options.Name] = options.Address;
-                await OpsManager.WriteAsync();
-            }
-        }
-
-        private static async Task HandleHistoryOptions(HistoryOptions options)
-        {
-            if (options.MaxCount <= 0)
-            {
-                if (Ops.History.Count > 0)
-                {
-                    Console.WriteLine("Input history:");
-                    foreach (var history in Ops.History)
-                    {
-                        Console.WriteLine(history);
-                    }
-                }
-            }
-            else
-            {
-                Ops.MaxHistoryCount = options.MaxCount;
                 await OpsManager.WriteAsync();
             }
         }
