@@ -19,6 +19,11 @@
             IntValue = value;
         }
 
+        public long SetLongValue(long value)
+        {
+            return value;
+        }
+
         public void SetValue(string stringValue, int intValue = 100)
         {
             StringValue = stringValue;

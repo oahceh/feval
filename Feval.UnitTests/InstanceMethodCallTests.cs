@@ -10,6 +10,18 @@ namespace Feval.UnitTests
         }
 
         [Fact]
+        public void ImplicitConversionTest()
+        {
+            Eval("using Feval.UnitTests");
+            Eval("var instance = new InstanceMethodCall()");
+            WriteLine();
+
+            Eval("instance.SetLongValue(100)");
+            Assert.Equal(100L, retValue);
+            WriteLine();
+        }
+
+        [Fact]
         public void Test()
         {
             Eval("using Feval.UnitTests");

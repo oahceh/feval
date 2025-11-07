@@ -127,7 +127,107 @@ namespace Feval
                 return true;
             }
 
-            return argType == paraType || argType.IsSubclassOf(paraType) || paraType.IsAssignableFrom(argType);
+            // 类型完全匹配、继承关系、接口实现
+            if (argType == paraType || argType.IsSubclassOf(paraType) || paraType.IsAssignableFrom(argType))
+            {
+                return true;
+            }
+
+            // 检查基础类型之间的隐式转换
+            return CanImplicitlyConvert(argType, paraType);
+        }
+
+        /// <summary>
+        /// 检查是否可以从源类型隐式转换到目标类型（针对基础类型）
+        /// </summary>
+        private static bool CanImplicitlyConvert(Type from, Type to)
+        {
+            if (from == null || to == null)
+            {
+                return false;
+            }
+
+            // 获取非 Nullable 的底层类型
+            var fromType = Nullable.GetUnderlyingType(from) ?? from;
+            var toType = Nullable.GetUnderlyingType(to) ?? to;
+
+            // 如果目标类型是 Nullable，则检查源类型是否可以转换到其底层类型
+            if (to != toType && CanImplicitlyConvert(from, toType))
+            {
+                return true;
+            }
+
+            // sbyte 隐式转换规则
+            if (fromType == typeof(sbyte))
+            {
+                return toType == typeof(short) || toType == typeof(int) || toType == typeof(long) ||
+                       toType == typeof(float) || toType == typeof(double) || toType == typeof(decimal);
+            }
+
+            // byte 隐式转换规则
+            if (fromType == typeof(byte))
+            {
+                return toType == typeof(short) || toType == typeof(ushort) || toType == typeof(int) ||
+                       toType == typeof(uint) || toType == typeof(long) || toType == typeof(ulong) ||
+                       toType == typeof(float) || toType == typeof(double) || toType == typeof(decimal);
+            }
+
+            // short 隐式转换规则
+            if (fromType == typeof(short))
+            {
+                return toType == typeof(int) || toType == typeof(long) ||
+                       toType == typeof(float) || toType == typeof(double) || toType == typeof(decimal);
+            }
+
+            // ushort 隐式转换规则
+            if (fromType == typeof(ushort))
+            {
+                return toType == typeof(int) || toType == typeof(uint) || toType == typeof(long) ||
+                       toType == typeof(ulong) || toType == typeof(float) || toType == typeof(double) ||
+                       toType == typeof(decimal);
+            }
+
+            // int 隐式转换规则
+            if (fromType == typeof(int))
+            {
+                return toType == typeof(long) || toType == typeof(float) ||
+                       toType == typeof(double) || toType == typeof(decimal);
+            }
+
+            // uint 隐式转换规则
+            if (fromType == typeof(uint))
+            {
+                return toType == typeof(long) || toType == typeof(ulong) ||
+                       toType == typeof(float) || toType == typeof(double) || toType == typeof(decimal);
+            }
+
+            // long 隐式转换规则
+            if (fromType == typeof(long))
+            {
+                return toType == typeof(float) || toType == typeof(double) || toType == typeof(decimal);
+            }
+
+            // ulong 隐式转换规则
+            if (fromType == typeof(ulong))
+            {
+                return toType == typeof(float) || toType == typeof(double) || toType == typeof(decimal);
+            }
+
+            // char 隐式转换规则
+            if (fromType == typeof(char))
+            {
+                return toType == typeof(ushort) || toType == typeof(int) || toType == typeof(uint) ||
+                       toType == typeof(long) || toType == typeof(ulong) || toType == typeof(float) ||
+                       toType == typeof(double) || toType == typeof(decimal);
+            }
+
+            // float 隐式转换规则
+            if (fromType == typeof(float))
+            {
+                return toType == typeof(double);
+            }
+
+            return false;
         }
 
         /// <summary>

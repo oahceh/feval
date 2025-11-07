@@ -20,6 +20,9 @@ namespace Feval.UnitTests
             if (WithReturn)
             {
                 m_Output.WriteLine(retValue?.ToString() ?? "null");
+            } else if (ret.Exception != null)
+            {
+                m_Output.WriteLine(ret.Exception.ToString());
             }
 
             return retValue;
