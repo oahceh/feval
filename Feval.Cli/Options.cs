@@ -59,25 +59,52 @@ namespace Feval.Cli
     internal sealed class ConfigurationKeyAttribute : Attribute
     {
         public string HelpText { get; set; }
+
+        public string DefaultValue { get; set; }
+    }
+
+    internal sealed class KeyEntry
+    {
+        public string Key { get; set; }
+
+        public string DefaultValue { get; set; }
+
+        public string Description { get; set; }
     }
 
     internal static class ConfigurationKeys
     {
-        [ConfigurationKey(HelpText = "Default remote service port")]
+        [ConfigurationKey(HelpText = "Default remote service port", DefaultValue = "9999")]
         public const string DefaultPort = "port.default";
 
-        [ConfigurationKey(HelpText = "Max history count")]
+        [ConfigurationKey(HelpText = "Max history count", DefaultValue = "50")]
         public const string MaxHistory = "history.max";
 
-        public static List<string> All()
+        public static string GetDefaultValue(string key)
         {
-            return typeof(ConfigurationKeys).GetFields(BindingFlags.Public | BindingFlags.Static)
+            var dictionary = EnumerateKeys().ToDictionary(entry => entry.Key, entry => entry);
+            return dictionary[key].DefaultValue;
+        }
+
+        public static IEnumerable<KeyEntry> EnumerateKeys()
+        {
+            return typeof(ConfigurationKeys)
+                .GetFields(BindingFlags.Public | BindingFlags.Static)
                 .Where(field => field.FieldType == typeof(string) &&
                                 field is { IsLiteral: true, IsInitOnly: false } &&
                                 Attribute.IsDefined(field, typeof(ConfigurationKeyAttribute)))
-                .Select(prop => prop.GetValue(null) as string)
-                .Where(value => !string.IsNullOrEmpty(value))
-                .ToList()!;
+                .Select(field => {
+                    var key = (string) field.GetValue(null)!;
+                    var attr = (ConfigurationKeyAttribute) Attribute.GetCustomAttribute(field,
+                        typeof(ConfigurationKeyAttribute))!;
+                    return new KeyEntry
+                    {
+                        Key = key,
+                        DefaultValue = attr.DefaultValue,
+                        Description = attr.HelpText
+                    };
+                })
+                .Where(entry => !string.IsNullOrEmpty(entry.Key));
         }
 
         public static string GetHelpText()

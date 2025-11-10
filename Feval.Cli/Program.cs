@@ -107,9 +107,13 @@ namespace Feval.Cli
                 var table = new Table();
                 table.AddColumn(new TableColumn("Key").Centered());
                 table.AddColumn("Value");
-                foreach (var kv in Ops.Configurations)
+                table.AddColumn("Description");
+
+                var entries = ConfigurationKeys.EnumerateKeys();
+                foreach (var entry in entries)
                 {
-                    table.AddRow(kv.Key, $"[green]{kv.Value}[/]");
+                    var value = Ops.Configurations.GetValueOrDefault(entry.Key, entry.DefaultValue);
+                    table.AddRow(entry.Key, $"[green]{value}[/]", entry.Description);
                 }
 
                 AnsiConsole.Write(table);

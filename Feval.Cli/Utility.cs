@@ -68,7 +68,7 @@ internal static class Utility
     /// </summary>
     /// <param name="input">要验证的字符串</param>
     /// <param name="ipAddress">输出的IP地址部分</param>
-    /// <param name="port">输出的端口号(未指定时为null)</param>
+    /// <param name="port">输出的端口号(未指定时为0)</param>
     /// <returns>验证是否成功</returns>
     public static bool TryParseIPAddress(this string input, out string ipAddress, out int port)
     {
@@ -77,7 +77,7 @@ internal static class Utility
 
         if (string.IsNullOrWhiteSpace(input))
         {
-            return true;
+            return false;
         }
 
         var match = m_IPAddressRegex.Match(input.Trim());
@@ -86,8 +86,8 @@ internal static class Utility
             return false;
         }
 
-        // 提取IP地址部分
-        ipAddress = match.Groups["ip"].Value + match.Groups[3].Value;
+        // 提取完整的IP地址部分
+        ipAddress = match.Groups["ip"].Value;
 
         // 提取并验证端口号
         if (match.Groups["port"].Success)
@@ -97,8 +97,8 @@ internal static class Utility
                 return false;
             }
 
-            // 端口号最大65535
-            if (portNumber > 65535)
+            // 端口号范围：1-65535
+            if (portNumber < 1 || portNumber > 65535)
             {
                 return false;
             }
@@ -119,7 +119,7 @@ internal static class Utility
     #region Field
 
     private static readonly Regex m_IPAddressRegex = new(
-        @"^(?<ip>(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::(?<port>\d{1,5}))?$",
+        @"^(?<ip>((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(?::(?<port>\d{1,5}))?$",
         RegexOptions.Compiled);
 
     #endregion

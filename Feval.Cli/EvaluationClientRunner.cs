@@ -25,7 +25,10 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
         // Port fallback
         if (port == 0)
         {
-            port = int.Parse(options.Configurations.GetValueOrDefault(ConfigurationKeys.DefaultPort, "9999"));
+            port = int.Parse(options.Configurations.GetValueOrDefault(
+                ConfigurationKeys.DefaultPort,
+                ConfigurationKeys.GetDefaultValue(ConfigurationKeys.DefaultPort))
+            );
             AnsiConsole.WriteLine($"Use default port: {port}");
         }
 
