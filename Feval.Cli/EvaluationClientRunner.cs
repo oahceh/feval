@@ -10,9 +10,8 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
         var options = manager.Options;
         var runOptions = options.Run;
 
-        var address = string.IsNullOrEmpty(runOptions.Address) ? "localhost" : runOptions.Address;
-        var port = runOptions.Port;
-
+        string address;
+        int port;
         if (runOptions.Scan)
         {
             (address, port) = await ScanAndChooseServiceHostAsync();
@@ -20,6 +19,22 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
             {
                 return;
             }
+        }
+        else
+        {
+            if (options.Aliases.TryGetValue(runOptions.Address, out var aliasAddress))
+            {
+                runOptions.Address = aliasAddress;
+            }
+
+            if (!runOptions.TryParseAddress(out var error))
+            {
+                AnsiConsole.Write(new Markup($"[red]{error}[/]"));
+                return;
+            }
+
+            address = string.IsNullOrEmpty(runOptions.Address) ? "localhost" : runOptions.Address;
+            port = runOptions.Port;
         }
 
         // Port fallback
@@ -29,10 +44,11 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
                 ConfigurationKeys.DefaultPort,
                 ConfigurationKeys.GetDefaultValue(ConfigurationKeys.DefaultPort))
             );
-            AnsiConsole.WriteLine($"Use default port: {port}");
+            AnsiConsole.WriteLine(string.Format(Locales.UseDefaultPort, port));
         }
 
         m_Client = new EvaluationClient(address, port);
+        m_Client.Disconnected += OnDisconnected;
 
         await AnsiConsole
             .Status()
@@ -40,32 +56,42 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
             .StartAsync("Connecting...",
                 async _ => { await TaskUtility.WaitUntil(() => m_Client.Connected != null); }
             );
-        if (m_Client.Connected == false)
+        if (!m_Client.Connected!.Value)
         {
             return;
         }
 
-        AnsiConsole.Markup($"Evaluation service connected: [green]{address}:{port}\n[/]");
+        AnsiConsole.Markup(string.Format(Locales.ServiceConnected, $"[green]{address}:{port}\n[/]"));
 
-        if (options.DefaultUsingNamespaces.Count > 0)
-        {
-            Console.WriteLine("Using default namespaces:");
-            foreach (var expression in options.DefaultUsingNamespaces.Select(ns => $"using {ns}"))
-            {
-                await m_Client.EvaluateAsync(expression);
-                Console.WriteLine(expression);
-            }
-        }
+        await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces);
 
         ReadLine.HistoryEnabled = true;
         ReadLine.AddHistory(options.History.ToArray());
         while (true)
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.Write(">> ");
-            Console.ResetColor();
-
+            AnsiConsole.Markup("[green]>> [/]");
             var input = ReadLine.Read();
+
+            if (m_Client.Connected == null || Reconnecting)
+            {
+                m_Client.Connect();
+                await AnsiConsole
+                    .Status()
+                    .Spinner(Spinner.Known.Dots)
+                    .StartAsync(Locales.Connecting,
+                        async _ => { await TaskUtility.WaitUntil(() => m_Client.Connected != null); }
+                    );
+
+                if (m_Client.Connected == null)
+                {
+                    AnsiConsole.MarkupLine(string.Format(Locales.ServiceConnectFailed, "[green]ENTER[/]", "CTRL+C"));
+                    continue;
+                }
+
+                await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces);
+                Reconnecting = false;
+            }
+
             if (input.StartsWith("#"))
             {
                 await HandleMetaCommands(input[1..]);
@@ -80,6 +106,26 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
                 }
             }
         }
+    }
+
+    private async Task UsingDefaultNamespacesAsync(IReadOnlyList<string> namespaces)
+    {
+        if (namespaces.Count > 0)
+        {
+            Console.WriteLine(Locales.UsingDefaultNamespaces);
+            foreach (var expression in namespaces.Select(ns => $"using {ns}"))
+            {
+                await m_Client.EvaluateAsync(expression);
+                Console.WriteLine(expression);
+            }
+        }
+    }
+
+    private void OnDisconnected()
+    {
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine(string.Format(Locales.ServiceDisconnected, "[green]ENTER[/]", "CTRL+C"));
+        Reconnecting = true;
     }
 
     private async Task<(string, int)> ScanAndChooseServiceHostAsync()
@@ -189,4 +235,6 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
     private IOptionsManager OptionsManager { get; set; } = null!;
 
     private EvaluationClient m_Client = null!;
+
+    private bool Reconnecting { get; set; }
 }

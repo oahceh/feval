@@ -139,7 +139,7 @@ namespace Feval.Cli
         public bool Verbose { get; set; }
 
         [Value(0, MetaName = "address", HelpText = $"Remote service address formatted like: {AddressTemplate}")]
-        public string Address { get; set; } = string.Empty;
+        public string Address { get; set; } = "127.0.0.1";
 
         public int Port { get; private set; }
 

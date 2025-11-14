@@ -100,7 +100,6 @@ namespace Net.Tcp.Common
                     // immediately and return zero bytes.
                     if (totalRead == 0 && e.SocketError == SocketError.Success)
                     {
-                        Console.WriteLine($"IOCP: remote host shut down connection");
                         Close(e);
                         break;
                     }
@@ -120,7 +119,6 @@ namespace Net.Tcp.Common
                     }
                     else if (e.SocketError != SocketError.Success)
                     {
-                        Console.WriteLine($"IOCP receive error: {e.SocketError}");
                         Close(e);
                         break;
                     }

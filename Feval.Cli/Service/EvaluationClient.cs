@@ -8,14 +8,19 @@ public sealed class EvaluationClient : IHandlerMessage
 {
     public bool? Connected { get; private set; }
 
-    public event Action ConnectFailed;
-
     public event Action Disconnected;
 
     public EvaluationClient(string address, int port)
     {
+        m_Address = address;
+        m_Port = port;
         m_Client = TCPClient.Create(this);
         m_Client.Connect(address, port);
+    }
+
+    public void Connect()
+    {
+        m_Client.Connect(m_Address, m_Port);
     }
 
     public async Task<(bool, string)> EvaluateAsync(string input)
@@ -36,12 +41,6 @@ public sealed class EvaluationClient : IHandlerMessage
 
     public void HandleConnected(bool v)
     {
-        if (!v)
-        {
-            ConnectFailed();
-            return;
-        }
-
         Connected = v;
     }
 
@@ -53,12 +52,13 @@ public sealed class EvaluationClient : IHandlerMessage
 
     public void HandleDisconnected()
     {
-        Disconnected();
+        Connected = null;
+        Disconnected?.Invoke();
     }
 
     public void HandleClose()
     {
-        Disconnected();
+        Connected = null;
     }
 
     private async Task<string> EvaluateAsyncInternal(string input)
@@ -78,4 +78,8 @@ public sealed class EvaluationClient : IHandlerMessage
     private IConnection m_Connection;
 
     private readonly TCPClient m_Client;
+
+    private readonly string m_Address;
+
+    private readonly int m_Port;
 }

@@ -247,7 +247,6 @@ namespace Net.Tcp.Client
             }
             catch (Exception e)
             {
-                Console.WriteLine($"ConnectCallback exception:  {e}");
                 Close();
                 Handler.HandleConnected(false);
                 Handler.HandleClose();

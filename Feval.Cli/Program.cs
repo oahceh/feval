@@ -1,4 +1,5 @@
-﻿using CommandLine;
+﻿using System.Globalization;
+using CommandLine;
 using Newtonsoft.Json;
 using Spectre.Console;
 using Parser = CommandLine.Parser;
@@ -32,16 +33,7 @@ namespace Feval.Cli
             }
             else
             {
-                if (Ops.Aliases.TryGetValue(options.Address, out var aliasAddress))
-                {
-                    options.Address = aliasAddress;
-                }
-
-                if (!options.TryParseAddress(out var error))
-                {
-                    AnsiConsole.Write(new Markup($"[red]{error}[/]"));
-                    return;
-                }
+                
 
                 m_Runner = new EvaluationClientRunner();
             }
