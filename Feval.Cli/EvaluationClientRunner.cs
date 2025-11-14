@@ -47,26 +47,52 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
             AnsiConsole.WriteLine(string.Format(Locales.UseDefaultPort, port));
         }
 
+        ReadLine.HistoryEnabled = true;
+        ReadLine.AddHistory(options.History.ToArray());
+
         m_Client = new EvaluationClient(address, port);
         m_Client.Disconnected += OnDisconnected;
 
-        await AnsiConsole
-            .Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync("Connecting...",
-                async _ => { await TaskUtility.WaitUntil(() => m_Client.Connected != null); }
-            );
-        if (!m_Client.Connected!.Value)
-        {
-            return;
-        }
-
-        AnsiConsole.Markup(string.Format(Locales.ServiceConnected, $"[green]{address}:{port}\n[/]"));
-
+        await ConnectAsync();
         await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces);
+        await Loop(options);
+    }
 
-        ReadLine.HistoryEnabled = true;
-        ReadLine.AddHistory(options.History.ToArray());
+    private async Task ConnectAsync()
+    {
+        while (true)
+        {
+            m_Client.Connect();
+            await AnsiConsole
+                .Status()
+                .Spinner(Spinner.Known.Dots)
+                .StartAsync(Locales.Connecting,
+                    async _ => { await TaskUtility.WaitUntil(() => m_Client.Connected != null); }
+                );
+
+            if (m_Client.Connected == null || !m_Client.Connected.Value)
+            {
+                AnsiConsole.MarkupLine(string.Format(Locales.ServiceConnectFailed, "[green]ENTER[/]", "CTRL+C"));
+                ReadLine.Read();
+                continue;
+            }
+
+            AnsiConsole.Markup(
+                string.Format(Locales.ServiceConnected, $"[green]{m_Client.Address}:{m_Client.Port}\n[/]")
+            );
+            break;
+        }
+    }
+
+    private async Task ReconnectAsync(Options options)
+    {
+        await ConnectAsync();
+        await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces);
+        Reconnecting = false;
+    }
+
+    private async Task Loop(Options options)
+    {
         while (true)
         {
             AnsiConsole.Markup("[green]>> [/]");
@@ -74,22 +100,7 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
 
             if (m_Client.Connected == null || Reconnecting)
             {
-                m_Client.Connect();
-                await AnsiConsole
-                    .Status()
-                    .Spinner(Spinner.Known.Dots)
-                    .StartAsync(Locales.Connecting,
-                        async _ => { await TaskUtility.WaitUntil(() => m_Client.Connected != null); }
-                    );
-
-                if (m_Client.Connected == null)
-                {
-                    AnsiConsole.MarkupLine(string.Format(Locales.ServiceConnectFailed, "[green]ENTER[/]", "CTRL+C"));
-                    continue;
-                }
-
-                await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces);
-                Reconnecting = false;
+                await ReconnectAsync(options);
             }
 
             if (input.StartsWith("#"))

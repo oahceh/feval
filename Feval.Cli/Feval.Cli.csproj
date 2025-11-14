@@ -6,7 +6,7 @@
         <Title>Feval.Cli</Title>
         <Authors>HeChao</Authors>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>1.3.6</Version>
+        <Version>1.3.7</Version>
         
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>feval</ToolCommandName>

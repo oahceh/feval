@@ -6,21 +6,24 @@ namespace Feval.Cli;
 
 public sealed class EvaluationClient : IHandlerMessage
 {
+    public string Address { get; }
+
+    public int Port { get; }
+    
     public bool? Connected { get; private set; }
 
     public event Action Disconnected;
 
     public EvaluationClient(string address, int port)
     {
-        m_Address = address;
-        m_Port = port;
+        Address = address;
+        Port = port;
         m_Client = TCPClient.Create(this);
-        m_Client.Connect(address, port);
     }
 
     public void Connect()
     {
-        m_Client.Connect(m_Address, m_Port);
+        m_Client.Connect(Address, Port);
     }
 
     public async Task<(bool, string)> EvaluateAsync(string input)
@@ -78,8 +81,4 @@ public sealed class EvaluationClient : IHandlerMessage
     private IConnection m_Connection;
 
     private readonly TCPClient m_Client;
-
-    private readonly string m_Address;
-
-    private readonly int m_Port;
 }
