@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Feval.Syntax;
 
 namespace Feval
@@ -53,6 +54,8 @@ namespace Feval
 
         public void Clear()
         {
+            WaitNamespaceCacheTask();
+            m_NamespaceCacheTask = null;
             SyntaxTree = null;
             m_ImportedAssemblies.Clear();
             m_VisitedNamespaces.Clear();
@@ -99,15 +102,21 @@ namespace Feval
         {
             foreach (var assembly in assemblies)
             {
-                WithReference(assembly);
+                m_ImportedAssemblies.Add(assembly);
             }
 
+            StartBuildNamespaceCache();
             return this;
         }
 
         public Context WithReference(Assembly assembly)
         {
-            m_ImportedAssemblies.Add(assembly);
+            if (m_ImportedAssemblies.Add(assembly))
+            {
+                WaitNamespaceCacheTask();
+                CacheAssemblyNamespaces(assembly);
+            }
+
             return this;
         }
 
@@ -150,7 +159,8 @@ namespace Feval
 
         public bool IsNamespace(string name)
         {
-            return m_VisitedNamespaces.Contains(name) || VisitNamespace(name);
+            WaitNamespaceCacheTask();
+            return m_VisitedNamespaces.Contains(name);
         }
 
         public bool TryLookupTypeOrNamespace(string name, out string @namespace, out List<Type> types)
@@ -247,9 +257,30 @@ namespace Feval
                 .Select(kv => kv.Value as VariableSymbol);
         }
 
-        private bool VisitNamespace(string name)
+        private void StartBuildNamespaceCache()
         {
-            foreach (var assembly in m_ImportedAssemblies)
+            var assemblies = m_ImportedAssemblies.ToArray();
+            m_NamespaceCacheTask = Task.Run(() =>
+            {
+                foreach (var assembly in assemblies)
+                {
+                    CacheAssemblyNamespaces(assembly);
+                }
+            });
+        }
+
+        private void WaitNamespaceCacheTask()
+        {
+            var task = m_NamespaceCacheTask;
+            if (task != null && !task.IsCompleted)
+            {
+                task.Wait();
+            }
+        }
+
+        private void CacheAssemblyNamespaces(Assembly assembly)
+        {
+            try
             {
                 foreach (var type in assembly.GetTypes())
                 {
@@ -259,15 +290,26 @@ namespace Feval
                         continue;
                     }
 
-                    m_VisitedNamespaces.Add(ns);
-                    if (ns.Contains(name))
-                    {
-                        return true;
-                    }
+                    AddNamespaceHierarchy(ns);
                 }
             }
+            catch (ReflectionTypeLoadException)
+            {
+            }
+        }
 
-            return false;
+        private void AddNamespaceHierarchy(string ns)
+        {
+            while (!string.IsNullOrEmpty(ns))
+            {
+                if (!m_VisitedNamespaces.Add(ns))
+                {
+                    break;
+                }
+
+                var lastDot = ns.LastIndexOf('.');
+                ns = lastDot >= 0 ? ns.Substring(0, lastDot) : null;
+            }
         }
 
         #endregion
@@ -285,6 +327,8 @@ namespace Feval
         private readonly Dictionary<string, Symbol> m_Symbols = new Dictionary<string, Symbol>();
 
         private readonly HashSet<string> m_UsingNamespaces = new HashSet<string>();
+
+        private Task m_NamespaceCacheTask;
 
         private const string LastAnswerVariableName = "ans";
 

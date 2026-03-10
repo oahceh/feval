@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -189,6 +189,12 @@ namespace Feval
                 return functionSymbol.Invoke(argumentValues);
             }
 
+            // Delegate stored in a variable
+            if (value is Delegate directDelegate)
+            {
+                return InvokeDelegate(directDelegate, argumentValues);
+            }
+
             // Find out variables
             var outVariables = new Dictionary<int, VariableSymbol>();
             for (var i = 0; i < argumentValues.Length; i++)
@@ -236,8 +242,14 @@ namespace Feval
                 }
             }
 
+            // Method not found, try delegate stored in a field/property
             if (methodInfo == null)
             {
+                if (TryGetMemberDelegate(isStatic, value, tns, out var memberDelegate))
+                {
+                    return InvokeDelegate(memberDelegate, argumentValues);
+                }
+
                 throw new MethodNotFoundException(TypeExtensions.FormatMethodName(tns.ToBindName, argumentValues));
             }
 
@@ -347,6 +359,32 @@ namespace Feval
             }
 
             return InvokeMethod(methodInfo, value, ref argumentValues);
+        }
+
+        private static EvaluationResult InvokeDelegate(Delegate del, object[] arguments)
+        {
+            var result = del.DynamicInvoke(arguments);
+            return del.Method.ReturnType == typeof(void)
+                ? EvaluationResult.Void
+                : EvaluationResult.FromValue(result);
+        }
+
+        private static bool TryGetMemberDelegate(bool isStatic, object value, TypeOrNamespace tns, out Delegate del)
+        {
+            object memberValue;
+            bool found;
+
+            if (isStatic)
+            {
+                found = tns.Types.First().TryGetMemberValue(tns.ToBindName, out memberValue);
+            }
+            else
+            {
+                found = ReflectionUtilities.TryGetMemberValue(value, tns.ToBindName, out memberValue);
+            }
+
+            del = found ? memberValue as Delegate : null;
+            return del != null;
         }
 
         private static EvaluationResult InvokeMethod(MethodInfo method, object thisValue, ref object[] argumentValues)

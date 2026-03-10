@@ -1,4 +1,6 @@
-﻿namespace Feval.UnitTests
+using System;
+
+namespace Feval.UnitTests
 {
     public static class ParentType
     {
@@ -125,5 +127,31 @@
         private readonly int m_A;
 
         private readonly int m_B;
+    }
+
+    public class DelegateHolder
+    {
+        public Func<int, int, int> AddFunc = (a, b) => a + b;
+
+        public Action<int> VoidAction = v => LastActionValue = v;
+
+        public static Func<string, string> StaticFunc = s => s.ToUpper();
+
+        public static int LastActionValue;
+
+        public int Apply(Func<int, int, int> func, int a, int b)
+        {
+            return func(a, b);
+        }
+
+        public void Execute(Action<int> action, int value)
+        {
+            action(value);
+        }
+
+        public static int StaticApply(Func<int, int, int> func, int a, int b)
+        {
+            return func(a, b);
+        }
     }
 }
