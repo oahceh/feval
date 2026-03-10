@@ -2,7 +2,7 @@
 <img width="240" src="logo.svg" alt="feval logo">
 </p>
 <h1 align="center">A Light C# Expression Evaluator</h1>
-<p align="center"><a href="https://www.nuget.org/packages/Feval.Core"><img alt="NuGet" src="https://img.shields.io/badge/nuget-v1.3.4-blue">
+<p align="center"><a href="https://www.nuget.org/packages/Feval.Core"><img alt="NuGet" src="https://img.shields.io/badge/nuget-v1.4.0-blue">
 </a></p>
 
 ## About
