@@ -1,4 +1,4 @@
-﻿using Spectre.Console;
+using Spectre.Console;
 
 namespace Feval.Cli;
 
@@ -54,6 +54,7 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
         m_Client.Disconnected += OnDisconnected;
 
         await ConnectAsync();
+        await NegotiateProtocolAsync();
         await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces);
         await Loop(options);
     }
@@ -84,9 +85,15 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
         }
     }
 
+    private async Task NegotiateProtocolAsync()
+    {
+        await m_Client.NegotiateProtocolAsync();
+    }
+
     private async Task ReconnectAsync(Options options)
     {
         await ConnectAsync();
+        await NegotiateProtocolAsync();
         await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces);
         Reconnecting = false;
     }
@@ -109,12 +116,8 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
             }
             else
             {
-                var (withResult, result) = await m_Client.EvaluateAsync(input);
-
-                if (withResult)
-                {
-                    Console.WriteLine(result);
-                }
+                var result = await m_Client.EvaluateAsync(input);
+                PrintResult(result);
             }
         }
     }
@@ -179,6 +182,22 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
         return (scanner.Hosts[index - 1].ip, scanner.Hosts[index - 1].port);
     }
 
+    private static void PrintResult(RemoteEvaluationResult result)
+    {
+        if (result.HasException)
+        {
+            AnsiConsole.MarkupLine($"[red]{Markup.Escape(result.ExceptionMessage)}[/]");
+            if (!string.IsNullOrEmpty(result.ExceptionStackTrace))
+            {
+                AnsiConsole.MarkupLine($"[dim]{Markup.Escape(result.ExceptionStackTrace)}[/]");
+            }
+        }
+        else if (result.WithReturn)
+        {
+            AnsiConsole.WriteLine(result.Value);
+        }
+    }
+
     private async Task HandleMetaCommands(string input)
     {
         if (input.StartsWith("load"))
@@ -196,7 +215,8 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
                         Console.Write(">> ");
                         Console.ResetColor();
                         Console.WriteLine(line);
-                        await m_Client.EvaluateAsync(line);
+                        var result = await m_Client.EvaluateAsync(line);
+                        PrintResult(result);
                     }
                 }
             }
@@ -210,10 +230,10 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
                 var index = input.IndexOf(expression, StringComparison.Ordinal) + expression.Length + 1;
                 var path = input[index..];
 
-                var ret = await m_Client.EvaluateAsync($"dump({expression})");
-                Console.WriteLine(ret);
+                var result = await m_Client.EvaluateAsync($"dump({expression})");
+                PrintResult(result);
 
-                await File.WriteAllTextAsync(path, ret.Item2);
+                await File.WriteAllTextAsync(path, result.Value);
                 Console.WriteLine($"Dump result has been write to file: {path}");
             }
             catch (Exception)
