@@ -14,7 +14,12 @@ namespace Feval.Cli
             Console.CancelKeyPress += OnCancelKeyPress;
             OpsManager = new OptionsManager(OptionsPath);
 
-            await Parser.Default.ParseArguments<RunOptions, UsingOptions, AliasOptions, ConfigOptions>(args)
+            using var parser = new Parser(settings =>
+            {
+                settings.HelpWriter = Console.Error;
+                settings.AllowMultiInstance = true;
+            });
+            await parser.ParseArguments<RunOptions, UsingOptions, AliasOptions, ConfigOptions>(args)
                 .MapResult(
                     (RunOptions options) => HandleRunOptions(options),
                     (UsingOptions options) => HandleUsingOptions(options),

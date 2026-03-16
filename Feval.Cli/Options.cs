@@ -138,6 +138,12 @@ namespace Feval.Cli
         [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages (standalone mode only)")]
         public bool Verbose { get; set; }
 
+        [Option('e', "eval", Required = false, HelpText = "Evaluate expression(s) and exit (standalone mode only)")]
+        public IEnumerable<string> Expressions { get; set; } = Enumerable.Empty<string>();
+
+        [Option('f', "file", Required = false, HelpText = "Execute expressions from a script file and exit (standalone mode only)")]
+        public string? ScriptFile { get; set; }
+
         [Value(0, MetaName = "address", HelpText = $"Remote service address formatted like: {AddressTemplate}")]
         public string Address { get; set; } = "127.0.0.1";
 

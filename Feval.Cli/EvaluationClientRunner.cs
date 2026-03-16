@@ -44,23 +44,36 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
                 ConfigurationKeys.DefaultPort,
                 ConfigurationKeys.GetDefaultValue(ConfigurationKeys.DefaultPort))
             );
-            AnsiConsole.WriteLine(string.Format(Locales.UseDefaultPort, port));
+            if (IsInteractive(runOptions))
+            {
+                AnsiConsole.WriteLine(string.Format(Locales.UseDefaultPort, port));
+            }
         }
-
-        ReadLine.HistoryEnabled = true;
-        ReadLine.AddHistory(options.History.ToArray());
 
         m_Client = new EvaluationClient(address, port);
         m_Client.Disconnected += OnDisconnected;
 
-        await ConnectAsync();
+        await ConnectAsync(runOptions);
         await NegotiateProtocolAsync();
-        await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces);
-        await Loop(options);
+
+        if (IsInteractive(runOptions))
+        {
+            await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces, verbose: true);
+            ReadLine.HistoryEnabled = true;
+            ReadLine.AddHistory(options.History.ToArray());
+            m_IsInteractive = true;
+            await Loop(options);
+        }
+        else
+        {
+            await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces, verbose: false);
+            await RunNonInteractive(runOptions);
+        }
     }
 
-    private async Task ConnectAsync()
+    private async Task ConnectAsync(RunOptions runOptions)
     {
+        var interactive = IsInteractive(runOptions);
         while (true)
         {
             m_Client.Connect();
@@ -73,14 +86,25 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
 
             if (m_Client.Connected == null || !m_Client.Connected.Value)
             {
+                if (!interactive)
+                {
+                    await Console.Error.WriteLineAsync("Failed to connect to remote service.");
+                    Environment.ExitCode = 1;
+                    return;
+                }
+
                 AnsiConsole.MarkupLine(string.Format(Locales.ServiceConnectFailed, "[green]ENTER[/]", "CTRL+C"));
                 ReadLine.Read();
                 continue;
             }
 
-            AnsiConsole.Markup(
-                string.Format(Locales.ServiceConnected, $"[green]{m_Client.Address}:{m_Client.Port}\n[/]")
-            );
+            if (interactive)
+            {
+                AnsiConsole.Markup(
+                    string.Format(Locales.ServiceConnected, $"[green]{m_Client.Address}:{m_Client.Port}\n[/]")
+                );
+            }
+
             break;
         }
     }
@@ -92,9 +116,9 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
 
     private async Task ReconnectAsync(Options options)
     {
-        await ConnectAsync();
+        await ConnectAsync(options.Run);
         await NegotiateProtocolAsync();
-        await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces);
+        await UsingDefaultNamespacesAsync(options.DefaultUsingNamespaces, verbose: true);
         Reconnecting = false;
     }
 
@@ -122,24 +146,117 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
         }
     }
 
-    private async Task UsingDefaultNamespacesAsync(IReadOnlyList<string> namespaces)
+    private async Task RunNonInteractive(RunOptions runOptions)
+    {
+        var hasExplicitInput = runOptions.Expressions.Any() || !string.IsNullOrEmpty(runOptions.ScriptFile);
+
+        try
+        {
+            // 1. Execute -e expressions
+            foreach (var expression in runOptions.Expressions)
+            {
+                if (!await EvaluateLineAsync(expression))
+                {
+                    Environment.ExitCode = 1;
+                    return;
+                }
+            }
+
+            // 2. Execute -f script file
+            if (!string.IsNullOrEmpty(runOptions.ScriptFile))
+            {
+                if (!File.Exists(runOptions.ScriptFile))
+                {
+                    await Console.Error.WriteLineAsync($"Script file not found: {runOptions.ScriptFile}");
+                    Environment.ExitCode = 1;
+                    return;
+                }
+
+                foreach (var line in File.ReadLines(runOptions.ScriptFile))
+                {
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        if (!await EvaluateLineAsync(line))
+                        {
+                            Environment.ExitCode = 1;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // 3. If no -e or -f, read from stdin
+            if (!hasExplicitInput)
+            {
+                string? line;
+                while ((line = Console.ReadLine()) != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        if (!await EvaluateLineAsync(line))
+                        {
+                            Environment.ExitCode = 1;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            await Console.Error.WriteLineAsync(e.Message);
+            Environment.ExitCode = 1;
+        }
+    }
+
+    /// <summary>
+    /// Evaluates a single line via remote service. Returns true on success, false on error.
+    /// </summary>
+    private async Task<bool> EvaluateLineAsync(string line)
+    {
+        var result = await m_Client.EvaluateAsync(line);
+        if (result.HasException)
+        {
+            await Console.Error.WriteLineAsync(result.ExceptionMessage);
+            return false;
+        }
+
+        if (result.WithReturn)
+        {
+            Console.WriteLine(result.Value);
+        }
+
+        return true;
+    }
+
+    private async Task UsingDefaultNamespacesAsync(IReadOnlyList<string> namespaces, bool verbose)
     {
         if (namespaces.Count > 0)
         {
-            Console.WriteLine(Locales.UsingDefaultNamespaces);
+            if (verbose)
+            {
+                Console.WriteLine(Locales.UsingDefaultNamespaces);
+            }
+
             foreach (var expression in namespaces.Select(ns => $"using {ns}"))
             {
                 await m_Client.EvaluateAsync(expression);
-                Console.WriteLine(expression);
+                if (verbose)
+                {
+                    Console.WriteLine(expression);
+                }
             }
         }
     }
 
     private void OnDisconnected()
     {
-        AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine(string.Format(Locales.ServiceDisconnected, "[green]ENTER[/]", "CTRL+C"));
-        Reconnecting = true;
+        if (m_IsInteractive)
+        {
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine(string.Format(Locales.ServiceDisconnected, "[green]ENTER[/]", "CTRL+C"));
+            Reconnecting = true;
+        }
     }
 
     private async Task<(string, int)> ScanAndChooseServiceHostAsync()
@@ -249,6 +366,11 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
 
     public void Quit()
     {
+        if (!m_IsInteractive)
+        {
+            return;
+        }
+
         var allHistory = ReadLine.GetHistory();
         if (allHistory.Count == 0)
         {
@@ -263,9 +385,28 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
         }
     }
 
+    private static bool IsInteractive(RunOptions runOptions)
+    {
+        if (runOptions.Expressions.Any() || !string.IsNullOrEmpty(runOptions.ScriptFile))
+        {
+            return false;
+        }
+
+        try
+        {
+            return !Console.IsInputRedirected;
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
     private IOptionsManager OptionsManager { get; set; } = null!;
 
     private EvaluationClient m_Client = null!;
+
+    private bool m_IsInteractive;
 
     private bool Reconnecting { get; set; }
 }
