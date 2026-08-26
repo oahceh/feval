@@ -73,6 +73,27 @@ namespace Feval.Cli
             {
                 // Best-effort cleanup on shutdown.
             }
+
+            RestoreTerminalState();
+        }
+
+        private static void RestoreTerminalState()
+        {
+            try
+            {
+                Console.ResetColor();
+                if (!Console.IsOutputRedirected)
+                {
+                    // Spectre.Console's Status() hides the cursor (ESC[?25l); exiting
+                    // mid-spinner or via ConPTY under PowerShell 7 can leave it hidden.
+                    Console.Out.Write("\x1b[?25h");
+                    Console.Out.Flush();
+                }
+            }
+            catch
+            {
+                // Best-effort.
+            }
         }
 
         private static int m_ShutdownFlag;
