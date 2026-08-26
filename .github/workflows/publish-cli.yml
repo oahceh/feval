@@ -1,0 +1,79 @@
+name: Publish Feval.Cli to NuGet
+
+on:
+  push:
+    tags:
+      - 'cli-v*'
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    permissions:
+      id-token: write   # required to mint the GitHub OIDC token for NuGet Trusted Publishing
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            7.0.x
+            8.0.x
+            9.0.x
+
+      - name: Extract version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          if (-not ($tag -match '^cli-v(\d+\.\d+\.\d+(?:-[A-Za-z0-9\.-]+)?)$')) {
+              throw "Tag '$tag' does not match 'cli-vX.Y.Z' (SemVer, optional prerelease)."
+          }
+          "version=$($Matches[1])" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Release version: $($Matches[1])"
+
+      - name: Verify csproj version matches tag
+        shell: pwsh
+        run: |
+          $content = Get-Content Feval.Cli/Feval.Cli.csproj -Raw
+          if (-not ($content -match '<Version>([^<]+)</Version>')) {
+              throw "Could not find <Version> in Feval.Cli.csproj."
+          }
+          $csprojVersion = $Matches[1]
+          $tagVersion    = '${{ steps.version.outputs.version }}'
+          if ($csprojVersion -ne $tagVersion) {
+              throw "csproj <Version> '$csprojVersion' does not match tag version '$tagVersion'. Bump csproj first, then re-tag."
+          }
+          Write-Host "csproj <Version> $csprojVersion matches tag."
+
+      - name: Test
+        run: dotnet test Feval.UnitTests/Feval.UnitTests.csproj -c Release --nologo
+
+      - name: Pack
+        run: dotnet pack Feval.Cli/Feval.Cli.csproj -c Release -o artifacts --nologo
+
+      - name: NuGet login (OIDC -> short-lived API key)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push to NuGet
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $pkg = Get-Item "artifacts/Feval.Cli.$version.nupkg"
+          dotnet nuget push $pkg.FullName `
+            --api-key '${{ steps.nuget-login.outputs.NUGET_API_KEY }}' `
+            --source https://api.nuget.org/v3/index.json `
+            --skip-duplicate
+
+      - name: Upload nupkg artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Feval.Cli-${{ steps.version.outputs.version }}
+          path: artifacts/*.nupkg

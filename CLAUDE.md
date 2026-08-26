@@ -30,3 +30,12 @@
 - Subject prefixes are lower-case: `feature:`, `fix:`, `chore:`. Imperative mood, under ~72 chars.
 - **Do not append a `Co-Authored-By` trailer.**
 - Version bumps go in their own `chore: Bump ...` commit — never mixed into a feature/fix commit.
+
+## Releasing Feval.Cli to NuGet
+- Automated via `.github/workflows/publish-cli.yml`, triggered by pushing a tag `cli-vX.Y.Z` (SemVer, optional prerelease suffix).
+- Uses **NuGet Trusted Publishing** (OIDC), not a long-lived API key. Prerequisites:
+  1. A Trusted Publishing policy on nuget.org (Account → Trusted Publishing) with Repository Owner = `oahceh`, Repository = `feval`, Workflow File = `publish-cli.yml`, Environment = *(blank)*.
+  2. Repo secret `NUGET_USER` set to the nuget.org profile username (**not** the email).
+- Workflow refuses to publish if the csproj `<Version>` and the tag disagree, and uses `--skip-duplicate` so re-running is safe. The short-lived NuGet API key returned by `NuGet/login@v1` is valid for ~1 hour and used only for the immediate push.
+- Local helper: `scripts/release-cli.ps1 -Version X.Y.Z [-Push]`. It bumps the csproj, runs tests + a local pack to verify, then commits (`chore: Bump Feval.Cli version to X.Y.Z`) and creates an annotated tag `cli-vX.Y.Z`. With `-Push`, it also pushes master and the tag. Refuses to run from a non-master branch or a dirty tree.
+- `Feval.Core` is not on this automation — its NuGet publishing is still manual.
