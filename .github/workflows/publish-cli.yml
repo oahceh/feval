@@ -50,11 +50,17 @@ jobs:
           }
           Write-Host "csproj <Version> $csprojVersion matches tag."
 
+      - name: Restore
+        run: dotnet restore Feval.sln
+
+      - name: Build
+        run: dotnet build Feval.sln -c Release --no-restore --nologo
+
       - name: Test
-        run: dotnet test Feval.UnitTests/Feval.UnitTests.csproj -c Release --nologo
+        run: dotnet test Feval.UnitTests/Feval.UnitTests.csproj -c Release --no-build --nologo
 
       - name: Pack
-        run: dotnet pack Feval.Cli/Feval.Cli.csproj -c Release -o artifacts --nologo
+        run: dotnet pack Feval.Cli/Feval.Cli.csproj -c Release --no-build -o artifacts --nologo
 
       - name: NuGet login (OIDC -> short-lived API key)
         id: nuget-login
