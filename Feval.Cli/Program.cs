@@ -48,13 +48,34 @@ namespace Feval.Cli
 
         private static void OnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
         {
-            m_Runner?.Quit();
+            e.Cancel = true;
+            Shutdown();
+            Environment.Exit(0);
         }
 
         private static void OnProcessExit(object? sender, EventArgs e)
         {
-            m_Runner?.Quit();
+            Shutdown();
         }
+
+        private static void Shutdown()
+        {
+            if (Interlocked.Exchange(ref m_ShutdownFlag, 1) != 0)
+            {
+                return;
+            }
+
+            try
+            {
+                m_Runner?.Quit();
+            }
+            catch
+            {
+                // Best-effort cleanup on shutdown.
+            }
+        }
+
+        private static int m_ShutdownFlag;
 
         private static async Task HandleUsingOptions(UsingOptions options)
         {

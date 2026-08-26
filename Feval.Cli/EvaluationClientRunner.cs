@@ -377,11 +377,16 @@ internal sealed class EvaluationClientRunner : IEvaluationRunner
             return;
         }
 
+        if (allHistory.Count <= OptionsManager.Options.History.Count)
+        {
+            return;
+        }
+
         var newHistory = allHistory.GetRange(OptionsManager.Options.History.Count,
             allHistory.Count - OptionsManager.Options.History.Count);
         if (OptionsManager.Options.AddHistory(newHistory))
         {
-            OptionsManager.WriteAsync();
+            OptionsManager.WriteAsync().GetAwaiter().GetResult();
         }
     }
 
